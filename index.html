@@ -3097,6 +3097,10 @@
                     }
                     return;
                 }
+                if (loginError) {
+                    loginError.textContent = '';
+                    loginError.classList.add('hidden');
+                }
                 googleSignInBtn.disabled = true;
                 googleSignInBtn.textContent = 'Signing in...';
                 auth.signInWithPopup(provider)
