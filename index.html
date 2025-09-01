@@ -2880,6 +2880,12 @@
 
         
         document.addEventListener('DOMContentLoaded', async () => {
+            // BYPASS AUTH FOR TESTING
+            isAuthenticated = true;
+            currentUser = { email: 'test@example.com', name: 'Test User' };
+            authModal.style.display = 'none';
+            mainContent.classList.remove('hidden');
+            
             // Bypass authentication for testing
             isAuthenticated = true;
             currentUser = { name: 'Test User', email: 'test@example.com' };
