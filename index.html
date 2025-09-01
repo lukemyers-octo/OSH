@@ -1312,6 +1312,9 @@
             <div>
                 <h2 class="text-3xl font-extrabold text-gray-900">Smart Hub Dashboard</h2>
                 <p class="mt-2 text-gray-600">Please sign in with your company Google account to continue.</p>
+                <div id="devModeMessage" class="mt-4 p-3 text-sm text-blue-700 bg-blue-100 rounded-lg hidden">
+                    🔧 <strong>Development Mode:</strong> Click the sign-in button to bypass authentication for testing.
+                </div>
             </div>
             <div id="loginError" class="hidden p-3 text-sm text-red-700 bg-red-100 rounded-lg"></div>
             <div>
@@ -3049,14 +3052,10 @@
             }
             
             if (DEV_MODE) {
-                console.log('🔧 DEVELOPMENT MODE: Bypassing authentication');
-                // Simulate authenticated user
-                currentAgentName = 'Test User';
-                if (loginScreen) loginScreen.style.display = 'none';
-                if (appContainer) appContainer.classList.remove('hidden');
-                initializeDashboard();
-                handleInitialHash();
-                try { initialiseMonthlyReport(); } catch (_) {}
+                console.log('🔧 DEVELOPMENT MODE: Authentication bypass enabled - click the Google sign-in button to proceed');
+                // Show development mode message
+                const devModeMessage = document.getElementById('devModeMessage');
+                if (devModeMessage) devModeMessage.classList.remove('hidden');
             } else {
                 auth.onAuthStateChanged(user => {
                     console.log('Auth state changed:', user ? 'signed in' : 'signed out');
@@ -3082,38 +3081,53 @@
                 });
             }
 
-            // Google sign-in
-            googleSignInBtn.addEventListener('click', function() {
-                if (!auth || !provider) {
-                    if (loginError) {
-                        loginError.textContent = 'Authentication is not initialised. Please refresh the page.';
-                        loginError.classList.remove('hidden');
+            // Google sign-in button event listener (always set up regardless of DEV_MODE)
+            if (googleSignInBtn) {
+                googleSignInBtn.addEventListener('click', function() {
+                    if (DEV_MODE) {
+                        // In development mode, simulate successful sign-in
+                        console.log('🔧 DEVELOPMENT MODE: Simulating Google sign-in');
+                        isAuthenticated = true;
+                        currentUser = { email: 'test@octoenergy.com', name: 'Test User' };
+                        if (loginScreen) loginScreen.style.display = 'none';
+                        if (appContainer) appContainer.classList.remove('hidden');
+                        initializeDashboard();
+                        handleInitialHash();
+                        try { initialiseMonthlyReport(); } catch (_) {}
+                        return;
                     }
-                    return;
-                }
-                googleSignInBtn.disabled = true;
-                googleSignInBtn.textContent = 'Signing in...';
-                auth.signInWithPopup(provider)
-                    .then((result) => {
-                        // Domain check
-                        if (!result.user.email.endsWith('@' + ORGANISATION_DOMAIN)) {
-                            auth.signOut();
-                            if (loginError) {
-                                loginError.textContent = 'Please sign in with your ' + ORGANISATION_DOMAIN + ' email.';
-                                loginError.classList.remove('hidden');
-                            }
-                        }
-                    })
-                    .catch((error) => {
-                        console.error('Sign-in error:', error);
+                    
+                    if (!auth || !provider) {
                         if (loginError) {
-                            loginError.textContent = error.message;
+                            loginError.textContent = 'Authentication is not initialised. Please refresh the page.';
                             loginError.classList.remove('hidden');
                         }
-                        googleSignInBtn.disabled = false;
-                        googleSignInBtn.innerHTML = '<img class="google-icon w-5 h-5 mr-3" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" aria-hidden="true" />Sign in with Google';
-                    });
-            });
+                        return;
+                    }
+                    googleSignInBtn.disabled = true;
+                    googleSignInBtn.textContent = 'Signing in...';
+                    auth.signInWithPopup(provider)
+                        .then((result) => {
+                            // Domain check
+                            if (!result.user.email.endsWith('@' + ORGANISATION_DOMAIN)) {
+                                auth.signOut();
+                                if (loginError) {
+                                    loginError.textContent = 'Please sign in with your ' + ORGANISATION_DOMAIN + ' email.';
+                                    loginError.classList.remove('hidden');
+                                }
+                            }
+                        })
+                        .catch((error) => {
+                            console.error('Sign-in error:', error);
+                            if (loginError) {
+                                loginError.textContent = error.message;
+                                loginError.classList.remove('hidden');
+                            }
+                            googleSignInBtn.disabled = false;
+                            googleSignInBtn.innerHTML = '<img class="google-icon w-5 h-5 mr-3" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" aria-hidden="true" />Sign in with Google';
+                        });
+                });
+            }
 
             // === ALL EVENT LISTENERS MOVED HERE ===
 
