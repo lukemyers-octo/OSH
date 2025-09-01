@@ -217,6 +217,52 @@
         .octo-t6 { animation-delay: 0.5s; }
         @keyframes octo-dash { to { stroke-dashoffset: -84; } }
         @keyframes octo-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        
+        /* Pink Octopus Loading Animations */
+        .octopus-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .octopus-container img {
+            animation: octopus-bounce 2s ease-in-out infinite;
+        }
+        
+        @keyframes octopus-bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0) scale(1);
+            }
+            40% {
+                transform: translateY(-20px) scale(1.1);
+            }
+            60% {
+                transform: translateY(-10px) scale(1.05);
+            }
+        }
+        
+        /* Add a subtle glow effect */
+        .octopus-container::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.2) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: glow-pulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes glow-pulse {
+            0%, 100% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.6;
+                transform: scale(1.2);
+            }
+        }
 
         /* Bouncing brand text */
         .octo-brand { display: flex; flex-direction: column; align-items: center; gap: 2px; }
@@ -1286,13 +1332,17 @@
         
 
         <!-- Loading and Error Section -->
-        <div id="loader" class="fixed inset-0 flex items-center justify-center bg-white dark:bg-slate-900 z-50">
+        <div id="loader" class="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-100 dark:from-gray-900 dark:to-gray-800 z-50">
             <div class="flex flex-col items-center">
-                <!-- Official Octopus Energy wordmark with animation (inline at runtime) -->
-                <div class="brand-loader" id="brandLoader" data-src="https://assets.octopusenergy.com/826x366/4197eacfc9/octopus-energy.svg" style="--brand-mask: url('https://assets.octopusenergy.com/826x366/4197eacfc9/octopus-energy.svg')">
-                    <noscript>
-                        <img class="w-16 h-16 animate-bounce" src="pink-octopus.png" alt="Loading" />
-                    </noscript>
+                <!-- Pink Octopus Loading Screen -->
+                <div class="brand-loader" id="brandLoader">
+                    <div class="octopus-container mb-8">
+                        <img src="pink-octopus.png" alt="Pink Octopus" class="w-32 h-32 animate-bounce" />
+                    </div>
+                    <div class="mt-8 text-center">
+                        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Smart Hub Dashboard</h1>
+                        <p class="text-lg text-gray-600 dark:text-gray-300">Loading your personalised insights...</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -3070,6 +3120,89 @@
                     if (agentChart && currentAgentName) updateAgentModalContent();
                 });
             }
+
+            // DEVELOPMENT MODE: Set to true to bypass authentication for testing
+            const DEV_MODE = true;
+            
+            // Add development mode banner if enabled
+            if (DEV_MODE) {
+                const devBanner = document.createElement('div');
+                devBanner.innerHTML = `
+                    <div style="position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(90deg, #FF6B6B, #4ECDC4); color: white; text-align: center; padding: 8px; font-weight: bold; z-index: 9999; font-family: 'Inter', sans-serif;">
+                        🔧 DEVELOPMENT MODE - Authentication Bypassed | Set DEV_MODE = false to re-enable
+                    </div>
+                `;
+                document.body.appendChild(devBanner);
+            }
+            
+            if (DEV_MODE) {
+                console.log('🔧 DEVELOPMENT MODE: Bypassing authentication');
+                // Simulate authenticated user
+                currentAgentName = 'Test User';
+                if (loginScreen) loginScreen.style.display = 'none';
+                if (appContainer) appContainer.classList.remove('hidden');
+                initializeDashboard();
+                handleInitialHash();
+                try { initialiseMonthlyReport(); } catch (_) {}
+            } else {
+                auth.onAuthStateChanged(user => {
+                    console.log('Auth state changed:', user ? 'signed in' : 'signed out');
+                    if (user) {
+                        console.log('User signed in:', user.email);
+                        // Ensure agent name is available for webhook payloads
+                        try {
+                            currentAgentName = (user && (user.displayName || (user.email ? user.email.split('@')[0] : ''))) || 'Unknown';
+                        } catch (_) { currentAgentName = 'Unknown'; }
+                        if (loginScreen) loginScreen.style.display = 'none';
+                        if (appContainer) appContainer.classList.remove('hidden');
+                        initializeDashboard();
+                        // Decide initial tab after dashboard init
+                        handleInitialHash();
+                        // Pre-initialise Monthly tab data in background so it is ready when opened
+                        try { initialiseMonthlyReport(); } catch (_) {}
+                    } else {
+                        console.log('User signed out');
+                        try { currentAgentName = null; } catch (_) {}
+                        if (loginScreen) loginScreen.style.display = 'flex';
+                        if (appContainer) appContainer.classList.add('hidden');
+                    }
+                });
+            }
+
+            // Google sign-in
+            googleSignInBtn.addEventListener('click', function() {
+                if (!auth || !provider) {
+                    if (loginError) {
+                        loginError.textContent = 'Authentication is not initialised. Please refresh the page.';
+                        loginError.classList.remove('hidden');
+                    }
+                    return;
+                }
+                googleSignInBtn.disabled = true;
+                googleSignInBtn.textContent = 'Signing in...';
+                auth.signInWithPopup(provider)
+                    .then((result) => {
+                        // Domain check
+                        if (!result.user.email.endsWith('@' + ORGANISATION_DOMAIN)) {
+                            auth.signOut();
+                            if (loginError) {
+                                loginError.textContent = 'Please sign in with your ' + ORGANISATION_DOMAIN + ' email.';
+                                loginError.classList.remove('hidden');
+                            }
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Sign-in error:', error);
+                        if (loginError) {
+                            loginError.textContent = error.message;
+                            loginError.classList.remove('hidden');
+                        }
+                        googleSignInBtn.disabled = false;
+                        googleSignInBtn.innerHTML = '<img class="google-icon w-5 h-5 mr-3" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" aria-hidden="true" />Sign in with Google';
+                    });
+            });
+
+            // === ALL EVENT LISTENERS MOVED HERE ===
 
             // Search input
             if (searchInput) {
