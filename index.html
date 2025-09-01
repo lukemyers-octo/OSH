@@ -2880,6 +2880,12 @@
 
         
         document.addEventListener('DOMContentLoaded', async () => {
+            // Bypass authentication for testing
+            isAuthenticated = true;
+            currentUser = { name: 'Test User', email: 'test@example.com' };
+            authModal.style.display = 'none';
+            mainContent.style.display = 'block';
+            
             // TESTING: Skip authentication entirely
             isAuthenticated = true;
             currentUser = { name: 'Test User', email: 'test@example.com' };
