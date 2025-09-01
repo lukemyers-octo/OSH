@@ -3079,6 +3079,7 @@
                         try { currentAgentName = null; } catch (_) {}
                         if (loginScreen) loginScreen.style.display = 'flex';
                         if (appContainer) appContainer.classList.add('hidden');
+                        if (googleSignInBtn) resetGoogleSignInButton();
                     }
                 });
             }
