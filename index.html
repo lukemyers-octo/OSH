@@ -1654,6 +1654,8 @@
         let agentInProgressContainer, downloadCsvBtn, darkModeToggle;
         // Flyout elements
         let flyoutBackdrop, flyoutPanel, flyoutTitle, flyoutClose, flyoutContent;
+        // Authentication elements
+        let googleSignInBtn, loginError, loginScreen, appContainer;
 
         // --- STATE ---
         let fullData = [];
@@ -2945,101 +2947,7 @@
 
         
         document.addEventListener('DOMContentLoaded', async () => {
-            // BYPASS AUTH FOR TESTING
-            isAuthenticated = true;
-            currentUser = { email: 'test@example.com', name: 'Test User' };
-            authModal.style.display = 'none';
-            mainContent.classList.remove('hidden');
-            
-            // Bypass authentication for testing
-            isAuthenticated = true;
-            currentUser = { name: 'Test User', email: 'test@example.com' };
-            authModal.style.display = 'none';
-            mainContent.style.display = 'block';
-            
-            // TESTING: Skip authentication entirely
-            isAuthenticated = true;
-            currentUser = { name: 'Test User', email: 'test@example.com' };
-            authModal.style.display = 'none';
-            mainContent.style.display = 'block';
-            
-            // TESTING: Skip authentication entirely
-            isAuthenticated = true;
-            currentUser = { email: 'test@example.com', name: 'Test User' };
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('appContainer').classList.remove('hidden');
-            
-            // Inline brand SVG with internal shimmer
             try {
-                const brandLoaderEl = document.getElementById('brandLoader');
-                if (brandLoaderEl && brandLoaderEl.dataset.src) {
-                    let svgText;
-                    try {
-                        const res = await fetchTextWithTimeout(brandLoaderEl.dataset.src, 12000);
-                        if (!res.ok) throw new Error(`SVG fetch failed: ${res.status}`);
-                        svgText = await res.text();
-                    } catch (corsError) {
-                        console.warn('External SVG fetch failed due to CORS, using cute pink octopus');
-                        svgText = `<svg viewBox="0 0 400 350" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                                <radialGradient id="octopusBodyGradient" cx="50%" cy="40%" r="60%">
-                                    <stop offset="0%" style="stop-color:#ff69b4"/>
-                                    <stop offset="70%" style="stop-color:#ff1493"/>
-                                    <stop offset="100%" style="stop-color:#e91e63"/>
-                                </radialGradient>
-                                <radialGradient id="eyeGradient" cx="30%" cy="30%" r="70%">
-                                    <stop offset="0%" style="stop-color:#ffffff"/>
-                                    <stop offset="100%" style="stop-color:#f8f9fa"/>
-                                </radialGradient>
-                                <filter id="octopusShadow" x="-50%" y="-50%" width="200%" height="200%">
-                                    <feDropShadow dx="2" dy="4" stdDeviation="8" flood-opacity="0.15"/>
-                                </filter>
-                            </defs>
-                            <circle cx="200" cy="130" r="80" fill="url(#octopusBodyGradient)" filter="url(#octopusShadow)"/>
-                            <circle cx="175" cy="115" r="22" fill="url(#eyeGradient)" stroke="#e0e0e0" stroke-width="1"/>
-                            <circle cx="225" cy="115" r="22" fill="url(#eyeGradient)" stroke="#e0e0e0" stroke-width="1"/>
-                            <circle cx="175" cy="115" r="16" fill="#2c3e50"/>
-                            <circle cx="225" cy="115" r="16" fill="#2c3e50"/>
-                            <circle cx="182" cy="108" r="6" fill="white" opacity="0.9"/>
-                            <circle cx="232" cy="108" r="6" fill="white" opacity="0.9"/>
-                            <circle cx="180" cy="112" r="3" fill="white"/>
-                            <circle cx="230" cy="112" r="3" fill="white"/>
-                            <ellipse cx="165" cy="95" rx="8" ry="3" fill="#ff1493" opacity="0.6"/>
-                            <ellipse cx="235" cy="95" rx="8" ry="3" fill="#ff1493" opacity="0.6"/>
-                            <path d="M 185 145 Q 200 155 215 145" stroke="#2c3e50" stroke-width="3" fill="none" stroke-linecap="round"/>
-                            <ellipse cx="140" cy="190" rx="12" ry="30" fill="url(#octopusBodyGradient)" transform="rotate(-25 140 190)"/>
-                            <ellipse cx="165" cy="200" rx="12" ry="35" fill="url(#octopusBodyGradient)" transform="rotate(-10 165 200)"/>
-                            <ellipse cx="190" cy="205" rx="12" ry="38" fill="url(#octopusBodyGradient)"/>
-                            <ellipse cx="210" cy="205" rx="12" ry="38" fill="url(#octopusBodyGradient)"/>
-                            <ellipse cx="235" cy="200" rx="12" ry="35" fill="url(#octopusBodyGradient)" transform="rotate(10 235 200)"/>
-                            <ellipse cx="260" cy="190" rx="12" ry="30" fill="url(#octopusBodyGradient)" transform="rotate(25 260 190)"/>
-                            <ellipse cx="155" cy="185" rx="10" ry="32" fill="url(#octopusBodyGradient)" transform="rotate(-18 155 185)" opacity="0.8"/>
-                            <ellipse cx="245" cy="185" rx="10" ry="32" fill="url(#octopusBodyGradient)" transform="rotate(18 245 185)" opacity="0.8"/>
-                            <circle cx="130" cy="215" r="6" fill="url(#octopusBodyGradient)"/>
-                            <circle cx="160" cy="230" r="6" fill="url(#octopusBodyGradient)"/>
-                            <circle cx="190" cy="240" r="6" fill="url(#octopusBodyGradient)"/>
-                            <circle cx="210" cy="240" r="6" fill="url(#octopusBodyGradient)"/>
-                            <circle cx="240" cy="230" r="6" fill="url(#octopusBodyGradient)"/>
-                            <circle cx="270" cy="215" r="6" fill="url(#octopusBodyGradient)"/>
-                            <text x="200" y="290" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="600" text-anchor="middle" fill="currentColor" opacity="0.8">Loading your dashboard...</text>
-                            <text x="200" y="315" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" text-anchor="middle" fill="currentColor">Smart Hub Dashboard</text>
-                        </svg>`;
-                    }
-                    brandLoaderEl.innerHTML = svgText;
-                    const injected = brandLoaderEl.querySelector('svg');
-                    if (injected) {
-            try {
-                isAuthenticated = true;
-                currentUser = { name: 'Test User', email: 'test@example.com' };
-                authModal.classList.add('hidden');
-                document.getElementById('mainContent').classList.remove('hidden');
-                
-                // Replace the brand loader with pink octopus
-                const brandLoader = document.getElementById('brandLoader');
-                if (brandLoader) {
-                    brandLoader.innerHTML = '<img class="w-16 h-16 animate-bounce" src="pink-octopus.png" alt="Loading" />';
-                }
-                
                 // Initialize the app
                 await initializeApp();
             } catch (error) {
@@ -3052,7 +2960,7 @@
                 const errorDiv = document.createElement('div');
                 document.body.appendChild(errorDiv);
             }
-        }
+        });
 
         async function initializeApp() {
             // Apply theme
@@ -3086,6 +2994,11 @@
             flyoutTitle = document.getElementById('flyoutTitle');
             flyoutClose = document.getElementById('flyoutClose');
             flyoutContent = document.getElementById('flyoutContent');
+            // Authentication elements
+            googleSignInBtn = document.getElementById('googleSignInBtn');
+            loginError = document.getElementById('loginError');
+            loginScreen = document.getElementById('loginScreen');
+            appContainer = document.getElementById('appContainer');
 
             // Set up event listeners
             setupEventListeners();
