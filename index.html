@@ -1833,23 +1833,38 @@
         function toggleElement(element, show) {
             if (!element) return;
             if (show) showElement(element);
-            else hideElement(element);
-        }
-
-        // --- AUTHENTICATION FUNCTIONS ---
-        function showSignIn() {
-            signInModal.classList.remove('hidden');
-            mainContent.classList.add('hidden');
-        }
-
-        function showMainContent() {
-            const loginScreen = document.getElementById('loginScreen');
-            const appContainer = document.getElementById('appContainer');
+            console.log('Google Sign-in clicked');
             
-            if (loginScreen) loginScreen.style.display = 'none';
-            if (appContainer) appContainer.classList.remove('hidden');
+            // Show loading state
+            const signInBtn = document.getElementById('googleSignInBtn');
+            const originalText = signInBtn.innerHTML;
+            signInBtn.innerHTML = '<div class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>Signing in...';
+            signInBtn.disabled = true;
             
-            initializeDashboard();
+            // Simulate authentication delay
+            setTimeout(() => {
+                // Simulate successful authentication
+                isAuthenticated = true;
+                currentUser = {
+                    name: 'Test User',
+                    email: 'test@example.com',
+                    picture: 'https://via.placeholder.com/40'
+                };
+                
+                // Hide auth modal and show main content
+                authModal.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+                
+                // Update UI
+                updateAuthUI();
+                
+                // Initialize dashboard
+                initializeDashboard();
+                
+                // Reset button
+                signInBtn.innerHTML = originalText;
+                signInBtn.disabled = false;
+            }, 1000);
             handleInitialHash();
             try { initialiseMonthlyReport(); } catch (_) {}
         }
