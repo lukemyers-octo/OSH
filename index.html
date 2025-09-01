@@ -1833,40 +1833,7 @@
         function toggleElement(element, show) {
             if (!element) return;
             if (show) showElement(element);
-            console.log('Google Sign-in clicked');
-            
-            // Show loading state
-            const signInBtn = document.getElementById('googleSignInBtn');
-            const originalText = signInBtn.innerHTML;
-            signInBtn.innerHTML = '<div class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>Signing in...';
-            signInBtn.disabled = true;
-            
-            // Simulate authentication delay
-            setTimeout(() => {
-                // Simulate successful authentication
-                isAuthenticated = true;
-                currentUser = {
-                    name: 'Test User',
-                    email: 'test@example.com',
-                    picture: 'https://via.placeholder.com/40'
-                };
-                
-                // Hide auth modal and show main content
-                authModal.classList.add('hidden');
-                mainContent.classList.remove('hidden');
-                
-                // Update UI
-                updateAuthUI();
-                
-                // Initialize dashboard
-                initializeDashboard();
-                
-                // Reset button
-                signInBtn.innerHTML = originalText;
-                signInBtn.disabled = false;
-            }, 1000);
-            handleInitialHash();
-            try { initialiseMonthlyReport(); } catch (_) {}
+            else hideElement(element);
         }
 
         // --- DATA FETCH + INIT ---
@@ -2913,35 +2880,85 @@
 
         
         document.addEventListener('DOMContentLoaded', async () => {
+            // TESTING: Skip authentication entirely
+            isAuthenticated = true;
+            currentUser = { email: 'test@example.com', name: 'Test User' };
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContainer').classList.remove('hidden');
+            
+            // Inline brand SVG with internal shimmer
+            try {
+                const brandLoaderEl = document.getElementById('brandLoader');
+                if (brandLoaderEl && brandLoaderEl.dataset.src) {
+                    let svgText;
+                    try {
+                        const res = await fetchTextWithTimeout(brandLoaderEl.dataset.src, 12000);
+                        if (!res.ok) throw new Error(`SVG fetch failed: ${res.status}`);
+                        svgText = await res.text();
+                    } catch (corsError) {
+                        console.warn('External SVG fetch failed due to CORS, using cute pink octopus');
+                        svgText = `<svg viewBox="0 0 400 350" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <radialGradient id="octopusBodyGradient" cx="50%" cy="40%" r="60%">
+                                    <stop offset="0%" style="stop-color:#ff69b4"/>
+                                    <stop offset="70%" style="stop-color:#ff1493"/>
+                                    <stop offset="100%" style="stop-color:#e91e63"/>
+                                </radialGradient>
+                                <radialGradient id="eyeGradient" cx="30%" cy="30%" r="70%">
+                                    <stop offset="0%" style="stop-color:#ffffff"/>
+                                    <stop offset="100%" style="stop-color:#f8f9fa"/>
+                                </radialGradient>
+                                <filter id="octopusShadow" x="-50%" y="-50%" width="200%" height="200%">
+                                    <feDropShadow dx="2" dy="4" stdDeviation="8" flood-opacity="0.15"/>
+                                </filter>
+                            </defs>
+                            <circle cx="200" cy="130" r="80" fill="url(#octopusBodyGradient)" filter="url(#octopusShadow)"/>
+                            <circle cx="175" cy="115" r="22" fill="url(#eyeGradient)" stroke="#e0e0e0" stroke-width="1"/>
+                            <circle cx="225" cy="115" r="22" fill="url(#eyeGradient)" stroke="#e0e0e0" stroke-width="1"/>
+                            <circle cx="175" cy="115" r="16" fill="#2c3e50"/>
+                            <circle cx="225" cy="115" r="16" fill="#2c3e50"/>
+                            <circle cx="182" cy="108" r="6" fill="white" opacity="0.9"/>
+                            <circle cx="232" cy="108" r="6" fill="white" opacity="0.9"/>
+                            <circle cx="180" cy="112" r="3" fill="white"/>
+                            <circle cx="230" cy="112" r="3" fill="white"/>
+                            <ellipse cx="165" cy="95" rx="8" ry="3" fill="#ff1493" opacity="0.6"/>
+                            <ellipse cx="235" cy="95" rx="8" ry="3" fill="#ff1493" opacity="0.6"/>
+                            <path d="M 185 145 Q 200 155 215 145" stroke="#2c3e50" stroke-width="3" fill="none" stroke-linecap="round"/>
+                            <ellipse cx="140" cy="190" rx="12" ry="30" fill="url(#octopusBodyGradient)" transform="rotate(-25 140 190)"/>
+                            <ellipse cx="165" cy="200" rx="12" ry="35" fill="url(#octopusBodyGradient)" transform="rotate(-10 165 200)"/>
+                            <ellipse cx="190" cy="205" rx="12" ry="38" fill="url(#octopusBodyGradient)"/>
+                            <ellipse cx="210" cy="205" rx="12" ry="38" fill="url(#octopusBodyGradient)"/>
+                            <ellipse cx="235" cy="200" rx="12" ry="35" fill="url(#octopusBodyGradient)" transform="rotate(10 235 200)"/>
+                            <ellipse cx="260" cy="190" rx="12" ry="30" fill="url(#octopusBodyGradient)" transform="rotate(25 260 190)"/>
+                            <ellipse cx="155" cy="185" rx="10" ry="32" fill="url(#octopusBodyGradient)" transform="rotate(-18 155 185)" opacity="0.8"/>
+                            <ellipse cx="245" cy="185" rx="10" ry="32" fill="url(#octopusBodyGradient)" transform="rotate(18 245 185)" opacity="0.8"/>
+                            <circle cx="130" cy="215" r="6" fill="url(#octopusBodyGradient)"/>
+                            <circle cx="160" cy="230" r="6" fill="url(#octopusBodyGradient)"/>
+                            <circle cx="190" cy="240" r="6" fill="url(#octopusBodyGradient)"/>
+                            <circle cx="210" cy="240" r="6" fill="url(#octopusBodyGradient)"/>
+                            <circle cx="240" cy="230" r="6" fill="url(#octopusBodyGradient)"/>
+                            <circle cx="270" cy="215" r="6" fill="url(#octopusBodyGradient)"/>
+                            <text x="200" y="290" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="600" text-anchor="middle" fill="currentColor" opacity="0.8">Loading your dashboard...</text>
+                            <text x="200" y="315" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" text-anchor="middle" fill="currentColor">Smart Hub Dashboard</text>
+                        </svg>`;
+                    }
+                    brandLoaderEl.innerHTML = svgText;
+                    const injected = brandLoaderEl.querySelector('svg');
+                    if (injected) {
+                        injected.classList.add('brand-logo');
+                    }
+                }
+            } catch (_) {}
+
+            // Initialize the app directly (skip auth check)
+            await initializeApp();
+        });
+
+        async function initializeApp() {
+            // Apply theme
             applyTheme();
             
-            // Bypass authentication for testing
-            bypassAuthForTesting();
-            return;
-            
-            // Check if user is already signed in
-            const savedUser = localStorage.getItem('currentUser');
-            if (savedUser) {
-                try {
-                    currentUser = JSON.parse(savedUser);
-                    isAuthenticated = true;
-                    showMainContent();
-                } catch (error) {
-                    console.error('Error parsing saved user:', error);
-                    localStorage.removeItem('currentUser');
-                    showSignIn();
-                }
-            } else {
-                showSignIn();
-            }
-            
-                            // Initialise ALL DOM elements here
-            const loginScreen = document.getElementById('loginScreen');
-            const googleSignInBtn = document.getElementById('googleSignInBtn');
-            const loginError = document.getElementById('loginError');
-            const appContainer = document.getElementById('appContainer');
-            
-            // Initialise the global DOM elements
+            // Initialize DOM elements
             loader = document.getElementById('loader');
             errorMessage = document.getElementById('errorMessage');
             dashboard = document.getElementById('dashboard');
@@ -2964,255 +2981,46 @@
             agentInProgressContainer = document.getElementById('agentInProgressContainer');
             downloadCsvBtn = document.getElementById('downloadCsvBtn');
             darkModeToggle = document.getElementById('darkModeToggle');
-            // Flyout DOM
             flyoutBackdrop = document.getElementById('flyoutBackdrop');
             flyoutPanel = document.getElementById('flyoutPanel');
             flyoutTitle = document.getElementById('flyoutTitle');
             flyoutClose = document.getElementById('flyoutClose');
             flyoutContent = document.getElementById('flyoutContent');
+
+            // Set up event listeners
+            setupEventListeners();
             
-            console.log('DOM elements:', {
-                loginScreen: !!loginScreen,
-                googleSignInBtn: !!googleSignInBtn,
-                loginError: !!loginError,
-                appContainer: !!appContainer
-            });
+            // Initialize dashboard
+            await initializeDashboard();
             
-            if (!googleSignInBtn) {
-                console.error('❌ Google sign-in button not found');
-                alert('Sign-in button not found in DOM');
-                return;
+            // Handle initial hash
+            handleInitialHash();
+            
+            // Initialize monthly report
+            try { 
+                initialiseMonthlyReport(); 
+            } catch (_) {}
+        }
+
+        function applyTheme() {
+            isDarkMode = localStorage.getItem('isDarkMode') === 'true';
+            applyDarkMode();
+        }
+
+        function setupEventListeners() {
+            // Dark mode toggle
+            if (darkModeToggle) {
+                darkModeToggle.addEventListener('click', () => {
+                    isDarkMode = !isDarkMode;
+                    localStorage.setItem('isDarkMode', isDarkMode);
+                    applyDarkMode();
+                    
+                    // Refresh charts to apply new theme
+                    if (ticketsChart) refreshChartOnly();
+                    if (agentChart && currentAgentName) updateAgentModalContent();
+                });
             }
-            
-            if (!window.firebaseReady) {
-                console.error('❌ Firebase not ready');
-                if (loginError) {
-                    loginError.textContent = 'Authentication service is not available. Please refresh the page.';
-                    loginError.classList.remove('hidden');
-                }
-                return;
-            }
-            
-            console.log('✅ DOM and Firebase ready, setting up auth listeners');
-            
-            // Inline the official Octopus Energy SVG into the loader for crisp animation
-            (async () => {
-                try {
-                    const brandLoaderEl = document.getElementById('brandLoader');
-                    if (brandLoaderEl && brandLoaderEl.dataset.src) {
-                        // Use a fallback SVG if CORS fails
-                        let svgText;
-                        try {
-                        const res = await fetchTextWithTimeout(brandLoaderEl.dataset.src, 12000);
-                        if (!res.ok) throw new Error(`SVG fetch failed: ${res.status}`);
-                            svgText = await res.text();
-                        } catch (corsError) {
-                            console.warn('External SVG fetch failed due to CORS, using cute pink octopus');
-                            // Cute pink octopus matching the user's image
-                            svgText = `<svg viewBox="0 0 400 350" xmlns="http://www.w3.org/2000/svg">
-                                <defs>
-                                    <!-- Bright pink gradient for the octopus body -->
-                                    <radialGradient id="octopusBodyGradient" cx="50%" cy="40%" r="60%">
-                                        <stop offset="0%" style="stop-color:#ff69b4"/>
-                                        <stop offset="70%" style="stop-color:#ff1493"/>
-                                        <stop offset="100%" style="stop-color:#e91e63"/>
-                                    </radialGradient>
-                                    
-                                    <!-- White gradient for eyes -->
-                                    <radialGradient id="eyeGradient" cx="30%" cy="30%" r="70%">
-                                        <stop offset="0%" style="stop-color:#ffffff"/>
-                                        <stop offset="100%" style="stop-color:#f8f9fa"/>
-                                    </radialGradient>
-                                    
-                                    <!-- Subtle drop shadow -->
-                                    <filter id="octopusShadow" x="-50%" y="-50%" width="200%" height="200%">
-                                        <feDropShadow dx="2" dy="4" stdDeviation="8" flood-opacity="0.15"/>
-                                    </filter>
-                                </defs>
-                                
-                                <!-- Main octopus body - round and cute -->
-                                <circle cx="200" cy="130" r="80" fill="url(#octopusBodyGradient)" filter="url(#octopusShadow)"/>
-                                
-                                <!-- Big adorable eyes -->
-                                <circle cx="175" cy="115" r="22" fill="url(#eyeGradient)" stroke="#e0e0e0" stroke-width="1"/>
-                                <circle cx="225" cy="115" r="22" fill="url(#eyeGradient)" stroke="#e0e0e0" stroke-width="1"/>
-                                
-                                <!-- Eye pupils - large and friendly -->
-                                <circle cx="175" cy="115" r="16" fill="#2c3e50"/>
-                                <circle cx="225" cy="115" r="16" fill="#2c3e50"/>
-                                
-                                <!-- Eye highlights for sparkle -->
-                                <circle cx="182" cy="108" r="6" fill="white" opacity="0.9"/>
-                                <circle cx="232" cy="108" r="6" fill="white" opacity="0.9"/>
-                                <circle cx="180" cy="112" r="3" fill="white"/>
-                                <circle cx="230" cy="112" r="3" fill="white"/>
-                                
-                                <!-- Cute little eyebrows -->
-                                <ellipse cx="165" cy="95" rx="8" ry="3" fill="#ff1493" opacity="0.6"/>
-                                <ellipse cx="235" cy="95" rx="8" ry="3" fill="#ff1493" opacity="0.6"/>
-                                
-                                <!-- Sweet smile -->
-                                <path d="M 185 145 Q 200 155 215 145" stroke="#2c3e50" stroke-width="3" fill="none" stroke-linecap="round"/>
-                                
-                                <!-- Tentacles - 8 cute wavy ones -->
-                                <ellipse cx="140" cy="190" rx="12" ry="30" fill="url(#octopusBodyGradient)" transform="rotate(-25 140 190)"/>
-                                <ellipse cx="165" cy="200" rx="12" ry="35" fill="url(#octopusBodyGradient)" transform="rotate(-10 165 200)"/>
-                                <ellipse cx="190" cy="205" rx="12" ry="38" fill="url(#octopusBodyGradient)"/>
-                                <ellipse cx="210" cy="205" rx="12" ry="38" fill="url(#octopusBodyGradient)"/>
-                                <ellipse cx="235" cy="200" rx="12" ry="35" fill="url(#octopusBodyGradient)" transform="rotate(10 235 200)"/>
-                                <ellipse cx="260" cy="190" rx="12" ry="30" fill="url(#octopusBodyGradient)" transform="rotate(25 260 190)"/>
-                                
-                                <!-- Additional back tentacles for depth -->
-                                <ellipse cx="155" cy="185" rx="10" ry="32" fill="url(#octopusBodyGradient)" transform="rotate(-18 155 185)" opacity="0.8"/>
-                                <ellipse cx="245" cy="185" rx="10" ry="32" fill="url(#octopusBodyGradient)" transform="rotate(18 245 185)" opacity="0.8"/>
-                                
-                                <!-- Tentacle tips -->
-                                <circle cx="130" cy="215" r="6" fill="url(#octopusBodyGradient)"/>
-                                <circle cx="160" cy="230" r="6" fill="url(#octopusBodyGradient)"/>
-                                <circle cx="190" cy="240" r="6" fill="url(#octopusBodyGradient)"/>
-                                <circle cx="210" cy="240" r="6" fill="url(#octopusBodyGradient)"/>
-                                <circle cx="240" cy="230" r="6" fill="url(#octopusBodyGradient)"/>
-                                <circle cx="270" cy="215" r="6" fill="url(#octopusBodyGradient)"/>
-                                
-                                <!-- Loading text -->
-                                <text x="200" y="290" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="600" text-anchor="middle" fill="currentColor" opacity="0.8">Loading your dashboard...</text>
-                                <text x="200" y="315" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" text-anchor="middle" fill="currentColor">Smart Hub Dashboard</text>
-                            </svg>`;
-                        }
-                        // Inject SVG markup and apply the animation class
-                        brandLoaderEl.innerHTML = svgText;
-                        const injected = brandLoaderEl.querySelector('svg');
-                        if (injected) {
-                            injected.classList.add('brand-logo');
-                            // Insert a clipped gradient overlay inside the SVG itself
-                            try {
-                                const svgns = 'http://www.w3.org/2000/svg';
-                                const defs = injected.querySelector('defs') || injected.insertBefore(document.createElementNS(svgns, 'defs'), injected.firstChild);
-                                // Linear gradient that sweeps across
-                                let lg = injected.querySelector('#brandShineGrad');
-                                if (!lg) {
-                                    lg = document.createElementNS(svgns, 'linearGradient');
-                                    lg.id = 'brandShineGrad';
-                                    lg.setAttribute('x1', '0%'); lg.setAttribute('y1', '0%');
-                                    lg.setAttribute('x2', '100%'); lg.setAttribute('y2', '0%');
-                                    const s1 = document.createElementNS(svgns, 'stop'); s1.setAttribute('offset', '45%'); s1.setAttribute('stop-color', 'rgba(255,255,255,0)');
-                                    const s2 = document.createElementNS(svgns, 'stop'); s2.setAttribute('offset', '50%'); s2.setAttribute('stop-color', 'rgba(255,255,255,1)');
-                                    const s3 = document.createElementNS(svgns, 'stop'); s3.setAttribute('offset', '55%'); s3.setAttribute('stop-color', 'rgba(255,255,255,0)');
-                                    lg.appendChild(s1); lg.appendChild(s2); lg.appendChild(s3);
-                                    defs.appendChild(lg);
-                                }
-                                // ClipPath using the full SVG viewport
-                                let clip = injected.querySelector('#brandClip');
-                                if (!clip) {
-                                    clip = document.createElementNS(svgns, 'clipPath');
-                                    clip.id = 'brandClip';
-                                    const vb = (injected.getAttribute('viewBox') || '0 0 96 96').split(' ').map(parseFloat);
-                                    const rect = document.createElementNS(svgns, 'rect');
-                                    rect.setAttribute('x', vb[0]); rect.setAttribute('y', vb[1]); rect.setAttribute('width', vb[2]); rect.setAttribute('height', vb[3]);
-                                    clip.appendChild(rect);
-                                    defs.appendChild(clip);
-                                }
-                                // Overlay rectangle that is clipped to the actual painted content
-                                let overlay = injected.querySelector('.shineOverlay');
-                                if (!overlay) {
-                                    overlay = document.createElementNS(svgns, 'rect');
-                                    overlay.classList.add('shineOverlay');
-                                    const vb = (injected.getAttribute('viewBox') || '0 0 96 96').split(' ').map(parseFloat);
-                                    overlay.setAttribute('x', vb[0]); overlay.setAttribute('y', vb[1]); overlay.setAttribute('width', vb[2]); overlay.setAttribute('height', vb[3]);
-                                    overlay.setAttribute('fill', 'url(#brandShineGrad)');
-                                    // Animate by translating across the viewBox
-                                    const anim = document.createElementNS(svgns, 'animateTransform');
-                                    anim.setAttribute('attributeName', 'transform');
-                                    anim.setAttribute('type', 'translate');
-                                    anim.setAttribute('from', '-10 0');
-                                    anim.setAttribute('to', '10 0');
-                                    anim.setAttribute('dur', '4.5s');
-                                    anim.setAttribute('repeatCount', 'indefinite');
-                                    overlay.appendChild(anim);
-                                    injected.appendChild(overlay);
-                                }
-                                // Ensure overlay sits above content but inside SVG bounds
-                                overlay.setAttribute('clip-path', 'url(#brandClip)');
-                            } catch (_) {}
-                            // Use the inlined SVG itself as the mask to avoid any edge bleed for fallback styles
-                            try {
-                                const serializer = new XMLSerializer();
-                                const dataUri = 'url("data:image/svg+xml;utf8,' + encodeURIComponent(serializer.serializeToString(injected)) + '")';
-                                brandLoaderEl.style.setProperty('--brand-mask', dataUri);
-                            } catch (_) {}
-                        }
-                    }
-                } catch (e) {
-                    console.warn('SVG inline failed, falling back to <img>:', e);
-                    const brandLoaderEl = document.getElementById('brandLoader');
-                    if (brandLoaderEl && !brandLoaderEl.querySelector('img')) {
-                        const img = document.createElement('img');
-                        img.className = 'brand-logo';
-                        img.alt = 'Octopus Energy';
-                        img.src = brandLoaderEl.dataset.src || 'https://assets.octopusenergy.com/826x366/4197eacfc9/octopus-energy.svg';
-                        brandLoaderEl.appendChild(img);
-                    }
-                }
-            })();
 
-            auth.onAuthStateChanged(user => {
-                console.log('Auth state changed:', user ? 'signed in' : 'signed out');
-                if (user) {
-                    console.log('User signed in:', user.email);
-                    // Ensure agent name is available for webhook payloads
-                    try {
-                        currentAgentName = (user && (user.displayName || (user.email ? user.email.split('@')[0] : ''))) || 'Unknown';
-                    } catch (_) { currentAgentName = 'Unknown'; }
-                    if (loginScreen) loginScreen.style.display = 'none';
-                    if (appContainer) appContainer.classList.remove('hidden');
-                    initializeDashboard();
-                    // Decide initial tab after dashboard init
-                    handleInitialHash();
-                    // Pre-initialise Monthly tab data in background so it is ready when opened
-                    try { initialiseMonthlyReport(); } catch (_) {}
-                } else {
-                    console.log('User signed out');
-                    try { currentAgentName = null; } catch (_) {}
-                    if (loginScreen) loginScreen.style.display = 'flex';
-                    if (appContainer) appContainer.classList.add('hidden');
-                }
-            });
-
-            // Google sign-in
-            googleSignInBtn.addEventListener('click', function() {
-                if (!auth || !provider) {
-                    if (loginError) {
-                        loginError.textContent = 'Authentication is not initialised. Please refresh the page.';
-                        loginError.classList.remove('hidden');
-                    }
-                    return;
-                }
-                googleSignInBtn.disabled = true;
-                googleSignInBtn.textContent = 'Signing in...';
-                auth.signInWithPopup(provider)
-                    .then((result) => {
-                        // Domain check
-                        if (!result.user.email.endsWith('@' + ORGANISATION_DOMAIN)) {
-                            auth.signOut();
-                            if (loginError) {
-                                loginError.textContent = 'Please sign in with your ' + ORGANISATION_DOMAIN + ' email.';
-                                loginError.classList.remove('hidden');
-                            }
-                        }
-                    })
-                    .catch((error) => {
-                        console.error('Sign-in error:', error);
-                        if (loginError) {
-                            loginError.textContent = error.message;
-                            loginError.classList.remove('hidden');
-                        }
-                        googleSignInBtn.disabled = false;
-                        googleSignInBtn.innerHTML = '<img class="google-icon w-5 h-5 mr-3" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" aria-hidden="true" />Sign in with Google';
-                    });
-            });
-
-            // === ALL EVENT LISTENERS MOVED HERE ===
-            
             // Search input
             if (searchInput) {
                 searchInput.addEventListener('input', debounce(() => {
@@ -3225,25 +3033,8 @@
             if (categoryFilter) categoryFilter.addEventListener('change', () => {
                 refreshAll();
                 if (agentModal && agentModal.style.display === 'flex') updateAgentModalContent();
-                // Sync to Monthly select and persist preference
-                try {
-                    const catVal = categoryFilter.value || 'all';
-                    const monthlySel = document.getElementById('categoryFilterMonthly');
-                    if (monthlySel) monthlySel.value = catVal;
-                    // Update monthly preference store
-                    const raw = localStorage.getItem('monthly_pref');
-                    const pref = raw ? JSON.parse(raw) : {};
-                    pref.category = catVal;
-                    localStorage.setItem('monthly_pref', JSON.stringify(pref));
-                    // If monthly view is visible and initialised, refresh it
-                    const monthlySection = document.getElementById('monthlyReportSection');
-                    if (monthlySection && !monthlySection.classList.contains('hidden')) {
-                        if (typeof monthlyInitialised !== 'undefined' && monthlyInitialised) {
-                            monthlyRefresh();
-                        }
-                    }
-                } catch (_) {}
             });
+            
             if (dateRangeFilter) {
                 dateRangeFilter.addEventListener('change', () => {
                     refreshAll();
@@ -3253,8 +3044,16 @@
                     if (customDates) customDates.classList.toggle('hidden', dateRangeFilter.value !== 'custom');
                 });
             }
-            if (dateFrom) dateFrom.addEventListener('change', () => { refreshAll(); if (agentModal && agentModal.style.display === 'flex') updateAgentModalContent(); });
-            if (dateTo) dateTo.addEventListener('change', () => { refreshAll(); if (agentModal && agentModal.style.display === 'flex') updateAgentModalContent(); });
+            
+            if (dateFrom) dateFrom.addEventListener('change', () => { 
+                refreshAll(); 
+                if (agentModal && agentModal.style.display === 'flex') updateAgentModalContent(); 
+            });
+            
+            if (dateTo) dateTo.addEventListener('change', () => { 
+                refreshAll(); 
+                if (agentModal && agentModal.style.display === 'flex') updateAgentModalContent(); 
+            });
             
             // Reset filters button
             if (resetFiltersBtn) {
@@ -3280,960 +3079,315 @@
             
             // Chart toggle
             if (chartToggle) {
-        chartToggle.addEventListener('click', (e) => {
-            if (e.target.tagName === 'BUTTON') {
-                const metric = e.target.dataset.metric;
-                if (metric) {
-                    chartToggle.querySelector('.active')?.classList.remove('active');
-                    e.target.classList.add('active');
-                    refreshAll();
+                chartToggle.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'BUTTON') {
+                        const metric = e.target.dataset.metric;
+                        if (metric) {
+                            chartToggle.querySelector('.active')?.classList.remove('active');
+                            e.target.classList.add('active');
+                            refreshAll();
                             if (agentModal && agentModal.style.display === 'flex') updateAgentModalContent();
-                }
-            }
-        });
-            }
-        
-            // Leaderboard events
-            if (leaderboardContainer) {
-        leaderboardContainer.addEventListener('click', (e) => {
-            const row = e.target.closest('tr');
-            if (row && row.dataset.agentName) {
-                openAgentModal(row.dataset.agentName);
-            }
-        });
-
-        leaderboardContainer.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                const row = e.target.closest('tr');
-                if (row && row.dataset.agentName) {
-                    openAgentModal(row.dataset.agentName);
-                    e.preventDefault();
-                }
-            }
-        });
-            }
-
-            // Top-level tab switching and monthly report lazy init
-            const tabDashboard = document.getElementById('tabDashboard');
-            const tabMonthly = document.getElementById('tabMonthly');
-            const monthlyReportSection = document.getElementById('monthlyReportSection');
-            const loaderMonthly = document.getElementById('loaderMonthly');
-            const errorMonthly = document.getElementById('errorMonthly');
-            const monthlyReportContent = document.getElementById('monthlyReportContent');
-            const categoryFilterMonthly = document.getElementById('categoryFilterMonthly');
-            const monthlyFiltersPanel = document.getElementById('monthlyFiltersPanel');
-            const monthlyReportsContainer = document.getElementById('monthlyReportsContainer');
-            const openFiltersBtn = document.getElementById('openFiltersBtn');
-            const openMonthlyFiltersBtn = document.getElementById('openMonthlyFiltersBtn');
-
-            let monthlyInitialised = false;
-
-            const setActiveTopTab = (target) => {
-                [tabDashboard, tabMonthly].forEach(btn => {
-                    if (!btn) return;
-                    const isActive = btn === target;
-                    btn.classList.toggle('active', isActive);
-                    btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
-                });
-            };
-
-            // Remember scroll position per tab
-            const saveScroll = (key) => {
-                try { localStorage.setItem(`scroll_${key}`, String(window.scrollY || window.pageYOffset || 0)); } catch (_) {}
-            };
-            const restoreScroll = (key) => {
-                try {
-                    const v = parseInt(localStorage.getItem(`scroll_${key}`) || '0', 10);
-                    const y = isNaN(v) ? 0 : v;
-                    requestAnimationFrame(() => window.scrollTo({ top: y, behavior: 'instant' in window ? 'instant' : 'auto' }));
-                } catch (_) { /* noop */ }
-            };
-
-            const showDashboard = () => {
-                // Save current tab scroll
-                saveScroll('monthly');
-                if (dashboard) dashboard.classList.remove('hidden');
-                if (monthlyReportSection) monthlyReportSection.classList.add('hidden');
-                setActiveTopTab(tabDashboard);
-                history.replaceState(null, '', '#dashboard');
-                restoreScroll('dashboard');
-            };
-
-            const showMonthly = () => {
-                // Save current tab scroll
-                saveScroll('dashboard');
-                    if (dashboard) dashboard.classList.add('hidden');
-                if (monthlyReportSection) monthlyReportSection.classList.remove('hidden');
-                setActiveTopTab(tabMonthly);
-                history.replaceState(null, '', '#monthly');
-                if (!monthlyInitialised) initialiseMonthlyReport();
-                restoreScroll('monthly');
-            };
-            // --- Flyout controls ---
-            function openFlyout(title, contentEl){
-                if (!flyoutPanel || !flyoutContent || !flyoutBackdrop) return;
-                try {
-                    if (flyoutTitle) flyoutTitle.textContent = title || 'Filters';
-                    // Mount controls into flyout slots for consistent layout
-                    const cat = document.getElementById('categoryFilter');
-                    const range = document.getElementById('dateRangeFilter');
-                    const resetBtn = document.getElementById('resetFiltersBtn');
-                    const csvBtn = document.getElementById('downloadCsvBtn');
-                    const from = document.getElementById('dateFrom');
-                    const to = document.getElementById('dateTo');
-                    const catMount = document.getElementById('flyoutCategoryMount');
-                    const rangeMount = document.getElementById('flyoutRangeMount');
-                    const resetMount = document.getElementById('flyoutResetMount');
-                    const csvMount = document.getElementById('flyoutCsvMount');
-                    const startMount = document.getElementById('flyoutStartMount');
-                    const endMount = document.getElementById('flyoutEndMount');
-                    if (cat && catMount && !catMount.contains(cat)) catMount.appendChild(cat);
-                    if (range && rangeMount && !rangeMount.contains(range)) rangeMount.appendChild(range);
-                    if (resetBtn && resetMount && !resetMount.contains(resetBtn)) resetMount.appendChild(resetBtn);
-                    if (csvBtn && csvMount && !csvMount.contains(csvBtn)) csvMount.appendChild(csvBtn);
-                    if (from && startMount && !startMount.contains(from)) startMount.appendChild(from);
-                    if (to && endMount && !endMount.contains(to)) endMount.appendChild(to);
-                    // Custom dates visibility
-                    const customDates = document.getElementById('flyoutCustomDates');
-                    if (customDates) customDates.classList.toggle('hidden', (range?.value || '') !== 'custom');
-                } catch (_) {}
-                flyoutBackdrop.classList.remove('hidden');
-                flyoutPanel.classList.remove('hidden');
-                flyoutPanel.setAttribute('aria-hidden', 'false');
-                requestAnimationFrame(() => {
-                    flyoutPanel.style.transform = 'translateX(0)';
-                    const handle = document.getElementById('flyoutHandle');
-                    if (handle) {
-                        handle.setAttribute('data-open','true');
-                        handle.setAttribute('aria-label','Close filters');
-                        handle.title = 'Close filters';
-                        // Smoothly animate handle position with panel
-                        const panelWidth = flyoutPanel.getBoundingClientRect().width;
-                        handle.style.transition = 'transform 250ms cubic-bezier(0.4, 0, 0.2, 1)';
-                        handle.style.transform = `translateY(-50%) translateX(-${Math.min(panelWidth, 420)}px)`;
-                        const ico = document.getElementById('flyoutHandleIcon');
-                        if (ico) {
-                            ico.style.transition = 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)';
-                            ico.style.transform = 'rotate(180deg)';
                         }
                     }
                 });
             }
-            function closeFlyout(){
-                if (!flyoutPanel || !flyoutContent || !flyoutBackdrop) return;
-                flyoutPanel.style.transform = '';
-                flyoutBackdrop.classList.add('hidden');
-                flyoutPanel.setAttribute('aria-hidden', 'true');
-                // Return content to original placeholders
-                try {
-                    const dashHolder = document.getElementById('dashboardFilters');
-                    const monthHolder = document.getElementById('monthlyFiltersPanel');
-                    // If dashboard filters currently mounted in flyout, return
-                    const hasDash = flyoutContent.querySelector('#dashboardFilters');
-                    const hasMonth = flyoutContent.querySelector('#monthlyFiltersPanel');
-                    if (hasDash && dashHolder) dashHolder.replaceWith(hasDash);
-                    if (hasMonth && monthHolder) monthHolder.replaceWith(hasMonth);
-                    // Return controls to their original containers if needed
-                    const cat = document.getElementById('categoryFilter');
-                    const range = document.getElementById('dateRangeFilter');
-                    const resetBtn = document.getElementById('resetFiltersBtn');
-                    const csvBtn = document.getElementById('downloadCsvBtn');
-                    const from = document.getElementById('dateFrom');
-                    const to = document.getElementById('dateTo');
-                    const filterRegion = document.querySelector('[aria-label="Data filters"]');
-                    if (filterRegion) {
-                        if (cat && !filterRegion.contains(cat)) filterRegion.querySelector('#categoryFilter')?.replaceWith(cat);
-                        if (range && !filterRegion.contains(range)) filterRegion.querySelector('#dateRangeFilter')?.replaceWith(range);
-                        if (resetBtn && !filterRegion.contains(resetBtn)) filterRegion.querySelector('#resetFiltersBtn')?.replaceWith(resetBtn);
-                        if (csvBtn && !filterRegion.contains(csvBtn)) filterRegion.querySelector('#downloadCsvBtn')?.replaceWith(csvBtn);
-                        if (from && !filterRegion.contains(from)) filterRegion.querySelector('#dateFrom')?.replaceWith(from);
-                        if (to && !filterRegion.contains(to)) filterRegion.querySelector('#dateTo')?.replaceWith(to);
+            
+            // Leaderboard events
+            if (leaderboardContainer) {
+                leaderboardContainer.addEventListener('click', (e) => {
+                    const row = e.target.closest('tr');
+                    if (row && row.dataset.agentName) {
+                        openAgentModal(row.dataset.agentName);
                     }
-                } catch (_) {}
+                });
+
+                leaderboardContainer.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        const row = e.target.closest('tr');
+                        if (row && row.dataset.agentName) {
+                            openAgentModal(row.dataset.agentName);
+                            e.preventDefault();
+                        }
+                    }
+                });
+            }
+
+            // Modal events
+            if (closeModalBtn) {
+                closeModalBtn.addEventListener('click', closeAgentModal);
+            }
+            
+            if (agentModal) {
+                agentModal.addEventListener('click', (e) => {
+                    if (e.target === agentModal) closeAgentModal();
+                    
+                    // Tab switching
+                    if (e.target.dataset.tab) {
+                        agentModal.querySelectorAll('.tab-btn').forEach(btn => {
+                            btn.classList.remove('active');
+                            btn.setAttribute('aria-selected', 'false');
+                        });
+                        e.target.classList.add('active');
+                        e.target.setAttribute('aria-selected', 'true');
+                        updateAgentModalContent();
+                    }
+                    
+                    // Flag button
+                    if (e.target.classList.contains('flag-btn')) {
+                        const account = e.target.dataset.account;
+                        const slack = e.target.dataset.slack;
+                        const submitted = e.target.dataset.submitted;
+                        
+                        if (flaggedAccountsThisSession.has(account)) {
+                            alert('This ticket has already been flagged in this session.');
+                            return;
+                        }
+                        
+                        e.target.disabled = true;
+                        e.target.textContent = 'Flagging...';
+                        
+                        const payload = {
+                            account_number: account,
+                            slack_link: slack,
+                            submitted_date: submitted,
+                            flagged_by: currentUser?.name || 'Unknown',
+                            flagged_at: new Date().toISOString()
+                        };
+                        
+                        postFormNoCors(FLAG_WEBHOOK_URL, payload, 8000)
+                            .then(() => {
+                                flaggedAccountsThisSession.add(account);
+                                e.target.textContent = '✓ Flagged';
+                                e.target.classList.remove('bg-yellow-100', 'text-yellow-800', 'hover:bg-yellow-200');
+                                e.target.classList.add('bg-green-100', 'text-green-800');
+                            })
+                            .catch(error => {
+                                console.error('Flag webhook error:', error);
+                                e.target.disabled = false;
+                                e.target.textContent = '⚠️ Flag';
+                                e.target.classList.remove('bg-yellow-100', 'text-yellow-800');
+                                e.target.classList.add('bg-red-100', 'text-red-800');
+                            });
+                    }
+                });
+            }
+            
+            // CSV download
+            if (downloadCsvBtn) {
+                downloadCsvBtn.addEventListener('click', () => {
+                    try {
+                        const filteredData = applyFilters();
+                        if (!filteredData || filteredData.length === 0) {
+                            alert('No data to export with current filters.');
+                            return;
+                        }
+                        
+                        const csvContent = convertToCSV(filteredData);
+                        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                        const link = document.createElement('a');
+                        const url = URL.createObjectURL(blob);
+                        link.setAttribute('href', url);
+                        link.setAttribute('download', `smart_hub_data_${new Date().toISOString().split('T')[0]}.csv`);
+                        link.style.visibility = 'hidden';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    } catch (error) {
+                        console.error('CSV export error:', error);
+                        alert('Error exporting data. Please try again.');
+                    }
+                });
+            }
+
+            // Tab switching
+            const tabDashboard = document.getElementById('tabDashboard');
+            const tabMonthly = document.getElementById('tabMonthly');
+            
+            if (tabDashboard) {
+                tabDashboard.addEventListener('click', showDashboard);
+            }
+            
+            if (tabMonthly) {
+                tabMonthly.addEventListener('click', showMonthly);
+            }
+
+            // Flyout events
+            if (flyoutBackdrop) flyoutBackdrop.addEventListener('click', closeFlyout);
+            if (flyoutClose) flyoutClose.addEventListener('click', closeFlyout);
+            
+            const flyoutHandle = document.getElementById('flyoutHandle');
+            if (flyoutHandle) {
+                flyoutHandle.classList.remove('hidden');
+                flyoutHandle.addEventListener('click', () => {
+                    const isOpen = flyoutPanel && (flyoutPanel.style.transform === 'translateX(0px)' || flyoutPanel.style.transform === 'translateX(0)');
+                    if (isOpen) {
+                        closeFlyout();
+                    } else {
+                        openFlyout('Filters');
+                    }
+                });
+            }
+
+            // ESC key handling
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (agentModal && agentModal.style.display === 'flex') {
+                        closeAgentModal();
+                    } else if (flyoutPanel && !flyoutPanel.classList.contains('hidden')) {
+                        closeFlyout();
+                    }
+                }
+            });
+        }
+
+        function handleInitialHash() {
+            const hash = (location.hash || '').toLowerCase();
+            if (hash === '#monthly') {
+                showMonthly();
+            } else {
+                showDashboard();
+            }
+        }
+
+        function showDashboard() {
+            if (dashboard) dashboard.classList.remove('hidden');
+            const monthlySection = document.getElementById('monthlyReportSection');
+            if (monthlySection) monthlySection.classList.add('hidden');
+            
+            const tabDashboard = document.getElementById('tabDashboard');
+            const tabMonthly = document.getElementById('tabMonthly');
+            
+            if (tabDashboard) {
+                tabDashboard.classList.add('active');
+                tabDashboard.setAttribute('aria-selected', 'true');
+            }
+            if (tabMonthly) {
+                tabMonthly.classList.remove('active');
+                tabMonthly.setAttribute('aria-selected', 'false');
+            }
+            
+            history.replaceState(null, '', '#dashboard');
+        }
+
+        function showMonthly() {
+            if (dashboard) dashboard.classList.add('hidden');
+            const monthlySection = document.getElementById('monthlyReportSection');
+            if (monthlySection) monthlySection.classList.remove('hidden');
+            
+            const tabDashboard = document.getElementById('tabDashboard');
+            const tabMonthly = document.getElementById('tabMonthly');
+            
+            if (tabDashboard) {
+                tabDashboard.classList.remove('active');
+                tabDashboard.setAttribute('aria-selected', 'false');
+            }
+            if (tabMonthly) {
+                tabMonthly.classList.add('active');
+                tabMonthly.setAttribute('aria-selected', 'true');
+            }
+            
+            history.replaceState(null, '', '#monthly');
+            
+            // Initialize monthly report if not already done
+            if (typeof monthlyInitialised === 'undefined' || !monthlyInitialised) {
+                initialiseMonthlyReport();
+            }
+        }
+
+        function openFlyout(title) {
+            if (!flyoutPanel || !flyoutContent || !flyoutBackdrop) return;
+            
+            try {
+                if (flyoutTitle) flyoutTitle.textContent = title || 'Filters';
+                
+                // Mount controls into flyout slots
+                const cat = document.getElementById('categoryFilter');
+                const range = document.getElementById('dateRangeFilter');
+                const resetBtn = document.getElementById('resetFiltersBtn');
+                const csvBtn = document.getElementById('downloadCsvBtn');
+                const from = document.getElementById('dateFrom');
+                const to = document.getElementById('dateTo');
+                
+                const catMount = document.getElementById('flyoutCategoryMount');
+                const rangeMount = document.getElementById('flyoutRangeMount');
+                const resetMount = document.getElementById('flyoutResetMount');
+                const csvMount = document.getElementById('flyoutCsvMount');
+                const startMount = document.getElementById('flyoutStartMount');
+                const endMount = document.getElementById('flyoutEndMount');
+                
+                if (cat && catMount && !catMount.contains(cat)) catMount.appendChild(cat);
+                if (range && rangeMount && !rangeMount.contains(range)) rangeMount.appendChild(range);
+                if (resetBtn && resetMount && !resetMount.contains(resetBtn)) resetMount.appendChild(resetBtn);
+                if (csvBtn && csvMount && !csvMount.contains(csvBtn)) csvMount.appendChild(csvBtn);
+                if (from && startMount && !startMount.contains(from)) startMount.appendChild(from);
+                if (to && endMount && !endMount.contains(to)) endMount.appendChild(to);
+                
+                // Custom dates visibility
+                const customDates = document.getElementById('flyoutCustomDates');
+                if (customDates) customDates.classList.toggle('hidden', (range?.value || '') !== 'custom');
+            } catch (_) {}
+            
+            flyoutBackdrop.classList.remove('hidden');
+            flyoutPanel.classList.remove('hidden');
+            flyoutPanel.setAttribute('aria-hidden', 'false');
+            
+            requestAnimationFrame(() => {
+                flyoutPanel.style.transform = 'translateX(0)';
+                
                 const handle = document.getElementById('flyoutHandle');
                 if (handle) {
-                    handle.setAttribute('data-open','false');
-                    handle.setAttribute('aria-label','Open filters');
-                    handle.title = 'Open filters';
+                    handle.setAttribute('data-open', 'true');
+                    handle.setAttribute('aria-label', 'Close filters');
+                    handle.title = 'Close filters';
+                    
+                    const panelWidth = flyoutPanel.getBoundingClientRect().width;
                     handle.style.transition = 'transform 250ms cubic-bezier(0.4, 0, 0.2, 1)';
-                    handle.style.transform = 'translateY(-50%) translateX(0)';
+                    handle.style.transform = `translateY(-50%) translateX(-${Math.min(panelWidth, 420)}px)`;
+                    
                     const ico = document.getElementById('flyoutHandleIcon');
                     if (ico) {
                         ico.style.transition = 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)';
-                        ico.style.transform = 'rotate(0deg)';
+                        ico.style.transform = 'rotate(180deg)';
                     }
                 }
-                setTimeout(() => { flyoutPanel.classList.add('hidden'); }, 250);
-            }
-            if (flyoutBackdrop) flyoutBackdrop.addEventListener('click', closeFlyout);
-            if (flyoutClose) flyoutClose.addEventListener('click', closeFlyout);
-            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeFlyout(); });
-
-            // Always show the handle and bind it to open the dashboard filters by default
-            try { document.getElementById('flyoutHandle')?.classList.remove('hidden'); } catch (_) {}
-            flyoutPanel?.addEventListener('transitionend', () => {
-                if (flyoutPanel.classList.contains('hidden')) {
-                    openFiltersBtn?.setAttribute('aria-expanded', 'false');
-                    openMonthlyFiltersBtn?.setAttribute('aria-expanded', 'false');
-                }
             });
-            const flyoutHandle = document.getElementById('flyoutHandle');
-            if (flyoutHandle) flyoutHandle.addEventListener('click', () => {
-                const isOpen = flyoutPanel && (flyoutPanel.style.transform === 'translateX(0px)' || flyoutPanel.style.transform === 'translateX(0)');
-                if (isOpen) closeFlyout();
-                else {
-                    const el = flyoutContent.firstElementChild || document.getElementById('dashboardFilters') || document.getElementById('monthlyFiltersPanel');
-                    if (el) { el.classList.remove('hidden'); openFlyout('Filters', el); }
-                }
-            });
-            // Ripple for handle
-            flyoutHandle?.addEventListener('pointerdown', (e) => {
-                const rect = flyoutHandle.getBoundingClientRect();
-                const wave = document.createElement('span');
-                wave.className = 'md-ripple__wave';
-                const size = Math.max(rect.width, rect.height) * 1.4;
-                wave.style.width = wave.style.height = size + 'px';
-                const x = (e.clientX - rect.left) - size / 2;
-                const y = (e.clientY - rect.top) - size / 2;
-                wave.style.left = x + 'px';
-                wave.style.top = y + 'px';
-                flyoutHandle.appendChild(wave);
-                wave.addEventListener('animationend', () => wave.remove(), { once: true });
-            });
+        }
 
-            const handleInitialHash = () => {
-                const hash = (location.hash || '').toLowerCase();
-                if (hash === '#monthly') showMonthly(); else showDashboard();
-                // Restore per-tab scroll after first render
-                requestAnimationFrame(() => {
-                    const key = hash === '#monthly' ? 'monthly' : 'dashboard';
-                    restoreScroll(key);
-                });
-            };
-
-            if (tabDashboard) tabDashboard.addEventListener('click', showDashboard);
-            if (tabMonthly) tabMonthly.addEventListener('click', showMonthly);
-
-            // Support browser back/forward navigation
-            window.addEventListener('hashchange', () => {
-                const hash = (location.hash || '').toLowerCase();
-                if (hash === '#monthly') showMonthly(); else showDashboard();
-            });
-
-            // ESC to return to dashboard from monthly report
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && monthlyReportSection && !monthlyReportSection.classList.contains('hidden')) {
-                    showDashboard();
-                }
-            });
-
-            // --- Monthly Report Implementation (namespaced) ---
-            const monthlyState = {
-                fullData: [],
-                categoryColName: null,
-                nameColName: null,
-                statusColName: null,
-                accountColName: null,
-                slackColName: null,
-                analyticsCache: {},
-                charts: {},
-                chartTypeByMonth: {}
-            };
-
-            function monthlySaveChartPrefs() {
-                try {
-                    localStorage.setItem('monthly_chart_prefs', JSON.stringify(monthlyState.chartTypeByMonth));
-                } catch (_) {}
-            }
-
-            function monthlyLoadChartPrefs() {
-                try {
-                    const saved = localStorage.getItem('monthly_chart_prefs');
-                    if (saved) {
-                        monthlyState.chartTypeByMonth = JSON.parse(saved);
-                    }
-                } catch (_) {}
-            }
-            let currentMonthlyModalData = null; // {items, category, monthId}
-
-            // Robust UK-first date parser for Monthly tab only.
-            // Behaviour:
-            // - Prefer DD/MM/YYYY (UK)
-            // - If that interpretation is in the future but MM/DD is not, use MM/DD
-            // - Reject any dates that still fall in the future
-            function monthlySafeDate(value) {
-                if (!value) return null;
-                const today = new Date();
-                today.setHours(23, 59, 59, 999);
-                const parts = String(value).trim().match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})/);
-                const buildDate = (d, m, y) => {
-                    let year = parseInt(y, 10);
-                    if (year < 100) year += 2000;
-                    const date = new Date(Date.UTC(parseInt(year, 10), parseInt(m, 10) - 1, parseInt(d, 10)));
-                    return isNaN(date.getTime()) ? null : date;
-                };
-                if (parts) {
-                    const d1 = parts[1], d2 = parts[2], y = parts[3];
-                    const ddmm = buildDate(d1, d2, y);
-                    const mmdd = buildDate(d2, d1, y);
-                    if (ddmm && ddmm <= today) return ddmm; // prefer UK if not future
-                    if (mmdd && mmdd <= today) return mmdd; // fall back to US if UK is future
-                    return null; // both future or invalid
-                }
-                const fallback = new Date(value);
-                if (!isNaN(fallback.getTime()) && fallback <= today) return fallback;
-                const swap = String(value).trim().match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})/);
-                if (swap) {
-                    const alt = buildDate(swap[2], swap[1], swap[3]);
-                    if (alt && alt <= today) return alt;
-                }
-                return null;
-            }
-
-            function initialiseMonthlyReport() {
-                if (monthlyInitialised) return;
-                monthlyInitialised = true;
+        function closeFlyout() {
+            if (!flyoutPanel || !flyoutContent || !flyoutBackdrop) return;
+            
+            flyoutPanel.style.transform = '';
+            flyoutBackdrop.classList.add('hidden');
+            flyoutPanel.setAttribute('aria-hidden', 'true');
+            
+            const handle = document.getElementById('flyoutHandle');
+            if (handle) {
+                handle.setAttribute('data-open', 'false');
+                handle.setAttribute('aria-label', 'Open filters');
+                handle.title = 'Open filters';
+                handle.style.transition = 'transform 250ms cubic-bezier(0.4, 0, 0.2, 1)';
+                handle.style.transform = 'translateY(-50%) translateX(0)';
                 
-                // Load saved chart preferences
-                monthlyLoadChartPrefs();
-                // Inline brand SVG for monthly loader
-                (async () => {
-                    try {
-                        const brandEl = document.getElementById('brandLoaderMonthly');
-                        if (brandEl && brandEl.dataset.src) {
-                            let svgText;
-                            try {
-                            const res = await fetchTextWithTimeout(brandEl.dataset.src, 12000);
-                            if (res.ok) {
-                                    svgText = await res.text();
-                                } else {
-                                    throw new Error('Fetch failed');
-                                }
-                            } catch (corsError) {
-                                console.warn('Monthly SVG fetch failed due to CORS, using cute pink octopus');
-                                // Cute pink octopus matching the user's image (monthly version)
-                                svgText = `<svg viewBox="0 0 400 350" xmlns="http://www.w3.org/2000/svg">
-                                    <defs>
-                                        <!-- Bright pink gradient for the octopus body -->
-                                        <radialGradient id="octopusBodyGradientMonthly" cx="50%" cy="40%" r="60%">
-                                            <stop offset="0%" style="stop-color:#ff69b4"/>
-                                            <stop offset="70%" style="stop-color:#ff1493"/>
-                                            <stop offset="100%" style="stop-color:#e91e63"/>
-                                        </radialGradient>
-                                        
-                                        <!-- White gradient for eyes -->
-                                        <radialGradient id="eyeGradientMonthly" cx="30%" cy="30%" r="70%">
-                                            <stop offset="0%" style="stop-color:#ffffff"/>
-                                            <stop offset="100%" style="stop-color:#f8f9fa"/>
-                                        </radialGradient>
-                                        
-                                        <!-- Subtle drop shadow -->
-                                        <filter id="octopusShadowMonthly" x="-50%" y="-50%" width="200%" height="200%">
-                                            <feDropShadow dx="2" dy="4" stdDeviation="8" flood-opacity="0.15"/>
-                                        </filter>
-                                    </defs>
-                                    
-                                    <!-- Main octopus body - round and cute -->
-                                    <circle cx="200" cy="130" r="80" fill="url(#octopusBodyGradientMonthly)" filter="url(#octopusShadowMonthly)"/>
-                                    
-                                    <!-- Big adorable eyes -->
-                                    <circle cx="175" cy="115" r="22" fill="url(#eyeGradientMonthly)" stroke="#e0e0e0" stroke-width="1"/>
-                                    <circle cx="225" cy="115" r="22" fill="url(#eyeGradientMonthly)" stroke="#e0e0e0" stroke-width="1"/>
-                                    
-                                    <!-- Eye pupils - large and friendly -->
-                                    <circle cx="175" cy="115" r="16" fill="#2c3e50"/>
-                                    <circle cx="225" cy="115" r="16" fill="#2c3e50"/>
-                                    
-                                    <!-- Eye highlights for sparkle -->
-                                    <ellipse cx="227" cy="125" rx="4" ry="6" fill="white" opacity="0.9"/>
-                                    <ellipse cx="283" cy="125" rx="4" ry="6" fill="white" opacity="0.9"/>
-                                    <circle cx="229" cy="127" r="2" fill="white"/>
-                                    <circle cx="285" cy="127" r="2" fill="white"/>
-                                    
-                                    <circle cx="182" cy="108" r="6" fill="white" opacity="0.9"/>
-                                    <circle cx="232" cy="108" r="6" fill="white" opacity="0.9"/>
-                                    <circle cx="180" cy="112" r="3" fill="white"/>
-                                    <circle cx="230" cy="112" r="3" fill="white"/>
-                                    
-                                    <!-- Cute little eyebrows -->
-                                    <ellipse cx="165" cy="95" rx="8" ry="3" fill="#ff1493" opacity="0.6"/>
-                                    <ellipse cx="235" cy="95" rx="8" ry="3" fill="#ff1493" opacity="0.6"/>
-                                    
-                                    <!-- Sweet smile -->
-                                    <path d="M 185 145 Q 200 155 215 145" stroke="#2c3e50" stroke-width="3" fill="none" stroke-linecap="round"/>
-                                    
-                                    <!-- Tentacles - 8 cute wavy ones -->
-                                    <ellipse cx="140" cy="190" rx="12" ry="30" fill="url(#octopusBodyGradientMonthly)" transform="rotate(-25 140 190)"/>
-                                    <ellipse cx="165" cy="200" rx="12" ry="35" fill="url(#octopusBodyGradientMonthly)" transform="rotate(-10 165 200)"/>
-                                    <ellipse cx="190" cy="205" rx="12" ry="38" fill="url(#octopusBodyGradientMonthly)"/>
-                                    <ellipse cx="210" cy="205" rx="12" ry="38" fill="url(#octopusBodyGradientMonthly)"/>
-                                    <ellipse cx="235" cy="200" rx="12" ry="35" fill="url(#octopusBodyGradientMonthly)" transform="rotate(10 235 200)"/>
-                                    <ellipse cx="260" cy="190" rx="12" ry="30" fill="url(#octopusBodyGradientMonthly)" transform="rotate(25 260 190)"/>
-                                    
-                                    <!-- Additional back tentacles for depth -->
-                                    <ellipse cx="155" cy="185" rx="10" ry="32" fill="url(#octopusBodyGradientMonthly)" transform="rotate(-18 155 185)" opacity="0.8"/>
-                                    <ellipse cx="245" cy="185" rx="10" ry="32" fill="url(#octopusBodyGradientMonthly)" transform="rotate(18 245 185)" opacity="0.8"/>
-                                    
-                                    <!-- Tentacle tips -->
-                                    <circle cx="130" cy="215" r="6" fill="url(#octopusBodyGradientMonthly)"/>
-                                    <circle cx="160" cy="230" r="6" fill="url(#octopusBodyGradientMonthly)"/>
-                                    <circle cx="190" cy="240" r="6" fill="url(#octopusBodyGradientMonthly)"/>
-                                    <circle cx="210" cy="240" r="6" fill="url(#octopusBodyGradientMonthly)"/>
-                                    <circle cx="240" cy="230" r="6" fill="url(#octopusBodyGradientMonthly)"/>
-                                    <circle cx="270" cy="215" r="6" fill="url(#octopusBodyGradientMonthly)"/>
-                                    
-                                    <!-- Loading text -->
-                                    <text x="200" y="290" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="600" text-anchor="middle" fill="currentColor" opacity="0.8">Loading monthly report...</text>
-                                    <text x="200" y="315" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" text-anchor="middle" fill="currentColor">Smart Hub Dashboard</text>
-                                </svg>`;
-                            }
-                                brandEl.innerHTML = svgText;
-                                const injected = brandEl.querySelector('svg');
-                                if (injected) {
-                                    injected.classList.add('brand-logo');
-                            }
-                        }
-                    } catch (_) {}
-                })();
-
-                // Delegated events inside monthly container
-                if (categoryFilterMonthly) {
-                    categoryFilterMonthly.addEventListener('change', monthlyRefresh);
-                }
-                const agentRollSel = document.getElementById('agentRollupMonthly');
-                const hideDeact = document.getElementById('hideDeactivatedMonthly');
-                const yearOnly = document.getElementById('thisYearOnlyMonthly');
-                const weekendsOnly = document.getElementById('weekendsOnlyMonthly');
-                [agentRollSel, hideDeact, yearOnly, weekendsOnly, categoryFilterMonthly].forEach(el => el && el.addEventListener('change', () => {
-                    // Persist user preferences
-                    try {
-                        localStorage.setItem('monthly_pref', JSON.stringify({
-                            agentRoll: agentRollSel ? agentRollSel.value : 'top10',
-                            hideDeact: !!(hideDeact && hideDeact.checked),
-                            yearOnly: !!(yearOnly && yearOnly.checked),
-                            weekendsOnly: !!(weekendsOnly && weekendsOnly.checked),
-                            category: categoryFilterMonthly ? categoryFilterMonthly.value : 'all'
-                        }));
-                        // Mirror to global categoryFilter to keep tabs in sync
-                        const globalCat = document.getElementById('categoryFilter');
-                        if (globalCat && categoryFilterMonthly) {
-                            globalCat.value = categoryFilterMonthly.value;
-                        }
-                    } catch (_) {}
-                    monthlyRefresh();
-                }));
-                if (monthlyReportsContainer) {
-                    monthlyReportsContainer.addEventListener('click', (e) => {
-                        // Click on agent row to open modal (mirror dashboard behaviour)
-                        const agentRow = e.target.closest('tr[data-agent-name]');
-                        if (agentRow && agentRow.dataset.agentName) {
-                            openAgentModal(agentRow.dataset.agentName);
-                            return;
-                        }
-                        if (e.target.classList.contains('copy-btn')) {
-                            monthlyCopyTableToClipboard(e);
-                        }
-                        // In-progress modal trigger (single site view)
-                        const progressBtn = e.target.closest('button[data-inprogress-month]');
-                        if (progressBtn) {
-                            const monthId = progressBtn.getAttribute('data-inprogress-month') || '';
-                            const cat = progressBtn.getAttribute('data-inprogress-cat') || '';
-                            const report = monthlyState.analyticsCache[monthId];
-                            if (!report) return;
-                            monthlyOpenInProgressModal(report, cat, monthId);
-                            return;
-                        }
-                        // Per-month chart gallery buttons
-                        const chartBtn = e.target.closest('.chart-btn');
-                        if (chartBtn && chartBtn.dataset.chart) {
-                            const section = chartBtn.closest('div[id^="month-"]');
-                            const monthId = section ? section.id : null;
-                            if (monthId) {
-                                monthlyState.chartTypeByMonth[monthId] = chartBtn.dataset.chart;
-                                monthlySaveChartPrefs();
-                                const gallery = section.querySelector(`#chartGallery-${monthId}`);
-                                if (gallery) {
-                                    gallery.querySelectorAll('.chart-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed','false'); });
-                                    chartBtn.classList.add('active');
-                                    chartBtn.setAttribute('aria-pressed','true');
-                                }
-                                // Re-render chart for that month only if in All Sites mode
-                                if ((document.getElementById('categoryFilterMonthly')?.value || 'all') === 'all') {
-                                    const report = monthlyState.analyticsCache[monthId];
-                                    if (report) monthlyRenderAllSitesChart(monthId, report);
-                                }
-                            }
-                            return;
-                        }
-                        // Accordion toggle
-                        const toggleBtn = e.target.closest('button[id$="-summary"]');
-                        if (toggleBtn && toggleBtn.id.startsWith('month-')) {
-                            const parent = toggleBtn.closest('div');
-                            const body = parent ? parent.querySelector('[data-collapsible]') : null;
-                            const chev = toggleBtn.querySelector('[data-chevron]');
-                            const expanded = toggleBtn.getAttribute('aria-expanded') === 'true';
-                            toggleBtn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
-                            if (body) body.classList.toggle('hidden');
-                            if (chev) chev.style.transform = expanded ? 'rotate(0deg)' : 'rotate(180deg)';
-                            return;
-                        }
-                        const id = e.target.id || '';
-                        const csvMatch = id.match(/^top-agents-csv-(month-\d{4}-\d{2})$/);
-                        if (csvMatch) {
-                            const monthId = csvMatch[1];
-                            const data = (monthlyState && monthlyState.analyticsCache) ? monthlyState.analyticsCache[monthId] : undefined;
-                            if (!data) return;
-                            const limitSel = document.getElementById(`top-agents-limit-${monthId}`);
-                            const sortSel = document.getElementById(`top-agents-sort-${monthId}`);
-                            const limit = limitSel ? limitSel.value : '10';
-                            const sortKey = sortSel ? sortSel.value : 'closed_desc';
-                            let rows = Object.entries(data.closedByAgentOverall || {}).filter(([name]) => name && name.toLowerCase() !== 'deactivated');
-                            if (sortKey === 'name_asc') rows.sort(([a], [b]) => a.localeCompare(b));
-                            else if (sortKey === 'name_desc') rows.sort(([a], [b]) => b.localeCompare(a));
-                            else if (sortKey === 'closed_asc') rows.sort(([, a], [, b]) => a - b);
-                            else rows.sort(([, a], [, b]) => b - a);
-                            if (limit !== 'all') rows = rows.slice(0, parseInt(limit, 10));
-                            const headers = ['Agent', 'Closed'];
-                            const filename = `top_agents_${monthId.replace('month-','')}.csv`;
-                            monthlyDownloadCsvFromRows(filename, headers, rows.map(([n,c]) => [n, c]));
-                        }
-                    });
-                    monthlyReportsContainer.addEventListener('change', (e) => {
-                        const id = e.target.id || '';
-                        const m1 = id.match(/^top-agents-limit-(month-\d{4}-\d{2})$/);
-                        const m2 = id.match(/^top-agents-sort-(month-\d{4}-\d{2})$/);
-                        const monthId = (m1 && m1[1]) || (m2 && m2[1]);
-                        if (!monthId) return;
-                        const data = (monthlyState && monthlyState.analyticsCache) ? monthlyState.analyticsCache[monthId] : undefined;
-                        if (!data) return;
-                        const limitSel = document.getElementById(`top-agents-limit-${monthId}`);
-                        const sortSel = document.getElementById(`top-agents-sort-${monthId}`);
-                        const limit = limitSel ? limitSel.value : '10';
-                        const sortKey = sortSel ? sortSel.value : 'closed_desc';
-                        monthlyRenderTopAgentsInto(`top-agents-${monthId}`, data.closedByAgentOverall, limit, sortKey);
-                    });
-                }
-                // Month nav clicks
-                const monthNav = document.getElementById('monthNav');
-                if (monthNav) {
-                    monthNav.addEventListener('click', (e) => {
-                        const siteBtn = e.target.closest('button[data-site]');
-                        if (siteBtn) { return; }
-                        const toggle = e.target.closest('#monthsToggle');
-                        if (toggle) {
-                            const chips = monthNav.querySelector('#monthsChips');
-                            if (chips) chips.classList.toggle('hidden');
-                            return;
-                        }
-                        const monthBtn = e.target.closest('button[data-month-id]');
-                        if (monthBtn) {
-                            const targetId = monthBtn.getAttribute('data-month-id');
-                            const el = document.getElementById(targetId);
-                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            return;
-                        }
-                        const id = e.target.id;
-                        if (id === 'expandAllMonths') {
-                            document.querySelectorAll('[data-collapsible]').forEach(el => el.classList.remove('hidden'));
-                            document.querySelectorAll('button[id$="-summary"]').forEach(btn => {
-                                btn.setAttribute('aria-expanded', 'true');
-                                const chev = btn.querySelector('[data-chevron]');
-                                if (chev) chev.style.transform = 'rotate(180deg)';
-                            });
-                            try { localStorage.setItem('monthlyAccordionOpenAll', 'true'); } catch (_) {}
-                            return;
-                        }
-                        if (id === 'collapseAllMonths') {
-                            document.querySelectorAll('[data-collapsible]').forEach(el => el.classList.add('hidden'));
-                            document.querySelectorAll('button[id$="-summary"]').forEach(btn => {
-                                btn.setAttribute('aria-expanded', 'false');
-                                const chev = btn.querySelector('[data-chevron]');
-                                if (chev) chev.style.transform = 'rotate(0deg)';
-                            });
-                            try { localStorage.setItem('monthlyAccordionOpenAll', 'false'); } catch (_) {}
-                        }
-                    });
-                }
-
-                monthlyInitializeData();
-                // Restore accordion state preference
-                try {
-                    const openAll = localStorage.getItem('monthlyAccordionOpenAll');
-                    if (openAll === 'false') {
-                        document.querySelectorAll('[data-collapsible]').forEach(el => el.classList.add('hidden'));
-                        document.querySelectorAll('button[id$="-summary"]').forEach(btn => {
-                            btn.setAttribute('aria-expanded', 'false');
-                            const chev = btn.querySelector('[data-chevron]');
-                            if (chev) chev.style.transform = 'rotate(0deg)';
-                        });
-                    }
-                } catch (_) {}
-            }
-
-            async function monthlyInitializeData() {
-                try {
-                    if (loaderMonthly) loaderMonthly.style.display = '';
-                    if (errorMonthly) errorMonthly.style.display = 'none';
-                    const response = await fetchJsonWithTimeout(API_URL, 15000);
-                    if (!response.ok) throw new Error(`Network error: ${response.statusText}`);
-                    const rawData = await response.json();
-                    if (!rawData || !rawData.length) throw new Error('No data received.');
-
-                    const columns = Object.keys(rawData[0]);
-                    const foundDateCols = {
-                        submitted: findColumnName(columns, DATE_COLUMNS.submitted),
-                        started: findColumnName(columns, DATE_COLUMNS.started),
-                        completed: findColumnName(columns, DATE_COLUMNS.completed)
-                    };
-                    monthlyState.categoryColName = findColumnName(columns, [CATEGORY_COLUMN]);
-                    monthlyState.nameColName = findColumnName(columns, [NAME_COLUMN]);
-                    monthlyState.statusColName = findColumnName(columns, ['Status','Current Status','Ticket Status']);
-                    monthlyState.accountColName = findColumnName(columns, [DATA_COLUMNS.account, 'Account', 'Account Number']);
-                    monthlyState.slackColName = findColumnName(columns, [DATA_COLUMNS.slack, 'Slack', 'Slack link']);
-
-                    if (!foundDateCols.completed || !foundDateCols.started) throw new Error(`Date columns ('started at'/'completed at') not found.`);
-                    if (!monthlyState.categoryColName) throw new Error(`Category column '${CATEGORY_COLUMN}' not found.`);
-                    if (!monthlyState.nameColName) throw new Error(`Name column '${NAME_COLUMN}' not found.`);
-
-                    monthlyState.fullData = rawData.map(d => {
-                        let categoryValue = d[monthlyState.categoryColName] ? String(d[monthlyState.categoryColName]).trim() : 'Uncategorized';
-                        if (categoryValue.toUpperCase().startsWith('DDC')) categoryValue = 'DDC';
-                        const submittedAt = monthlySafeDate(d[foundDateCols.submitted]);
-                        const startedAt = monthlySafeDate(d[foundDateCols.started]);
-                        const completedAt = monthlySafeDate(d[foundDateCols.completed]);
-                        const account = monthlyState.accountColName ? (d[monthlyState.accountColName] || '') : '';
-                        const slack = monthlyState.slackColName ? (d[monthlyState.slackColName] || '') : '';
-                        return { category: categoryValue, name: d[monthlyState.nameColName], submittedAt, startedAt, completedAt, account, slack };
-                    }).filter(d => d.startedAt);
-
-                    monthlyPopulateCategoryFilter(monthlyState.fullData);
-                    // Restore user preferences
-                    try {
-                        const raw = localStorage.getItem('monthly_pref');
-                        if (raw) {
-                            const pref = JSON.parse(raw);
-                            if (categoryFilterMonthly && pref.category) categoryFilterMonthly.value = pref.category;
-                            // Keep global select in sync
-                            try { const globalCat = document.getElementById('categoryFilter'); if (globalCat && pref.category) globalCat.value = pref.category; } catch (_) {}
-                            const agentSel = document.getElementById('agentRollupMonthly');
-                            if (agentSel && pref.agentRoll) agentSel.value = pref.agentRoll;
-                            const hide = document.getElementById('hideDeactivatedMonthly');
-                            if (hide) hide.checked = !!pref.hideDeact;
-                            const yr = document.getElementById('thisYearOnlyMonthly');
-                            if (yr) yr.checked = !!pref.yearOnly;
-                            const wk = document.getElementById('weekendsOnlyMonthly');
-                            if (wk) wk.checked = !!pref.weekendsOnly;
-                        }
-                    } catch (_) {}
-                    monthlyRefresh();
-
-                    if (loaderMonthly) loaderMonthly.style.display = 'none';
-                    if (monthlyReportContent) monthlyReportContent.classList.remove('hidden');
-                } catch (error) {
-                    console.error('Monthly init error:', error);
-                    if (errorMonthly) { errorMonthly.textContent = `Error: ${error.message}`; errorMonthly.style.display = 'block'; }
-                    if (loaderMonthly) loaderMonthly.style.display = 'none';
+                const ico = document.getElementById('flyoutHandleIcon');
+                if (ico) {
+                    ico.style.transition = 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)';
+                    ico.style.transform = 'rotate(0deg)';
                 }
             }
+            
+            setTimeout(() => { 
+                flyoutPanel.classList.add('hidden'); 
+            }, 250);
+        }
 
-            function monthlyPopulateCategoryFilter(data) {
-                if (!categoryFilterMonthly) return;
-                const categories = [...new Set(data.map(item => item.category).filter(Boolean))].sort();
-                categoryFilterMonthly.innerHTML = `<option value="all">All Sites</option>` +
-                    categories.map(cat => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`).join('');
-            }
+        // Monthly report placeholder functions
+        function initialiseMonthlyReport() {
+            console.log('Monthly report initialization placeholder');
+        }
 
-            function monthlyRefresh() {
-                if (!monthlyState.fullData || !Array.isArray(monthlyState.fullData)) {
-                    console.warn('Monthly data not ready for refresh');
-                    return;
-                }
-                // Apply quick global filters prior to analytics
-                const hideDeact = document.getElementById('hideDeactivatedMonthly');
-                const yearOnly = document.getElementById('thisYearOnlyMonthly');
-                const weekendsOnly = document.getElementById('weekendsOnlyMonthly');
-                const now = new Date();
-                const filtered = monthlyState.fullData.filter(item => {
-                    if (hideDeact && hideDeact.checked && item.name && String(item.name).toLowerCase() === 'deactivated') return false;
-                    if (yearOnly && yearOnly.checked) {
-                        if (!(item.startedAt && item.startedAt.getUTCFullYear() === now.getUTCFullYear())) return false;
-                    }
-                    if (weekendsOnly && weekendsOnly.checked) {
-                        const day = item.startedAt.getUTCDay();
-                        if (!(day === 0 || day === 6)) return false;
-                    }
-                    return true;
-                });
-                const reports = monthlyAnalyzeDataByMonth(filtered);
-                monthlyRenderMonthlyReports(reports, categoryFilterMonthly ? categoryFilterMonthly.value : 'all');
-            }
-
-            function monthlyAnalyzeDataByMonth(data) {
-                const reports = {};
-                data.forEach(ticket => {
-                    const year = ticket.startedAt.getUTCFullYear();
-                    const month = ticket.startedAt.getUTCMonth();
-                    const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
-                    if (!reports[monthKey]) {
-                        reports[monthKey] = {
-                            closedByCategory: {},
-                            inProgressByCategory: {},
-                            closedByAgent: {},
-                            closedByAgentOverall: {},
-                            dailyClosedByCategory: {},
-                            categories: new Set()
-                        };
-                    }
-                    const category = ticket.category;
-                    reports[monthKey].categories.add(category);
-                    if (ticket.completedAt && ticket.completedAt.getUTCFullYear() === year && ticket.completedAt.getUTCMonth() === month) {
-                        reports[monthKey].closedByCategory[category] = (reports[monthKey].closedByCategory[category] || 0) + 1;
-                        if (ticket.name && ticket.name.toLowerCase() !== 'deactivated') {
-                            if (!reports[monthKey].closedByAgent[category]) reports[monthKey].closedByAgent[category] = {};
-                            reports[monthKey].closedByAgent[category][ticket.name] = (reports[monthKey].closedByAgent[category][ticket.name] || 0) + 1;
-                            reports[monthKey].closedByAgentOverall[ticket.name] = (reports[monthKey].closedByAgentOverall[ticket.name] || 0) + 1;
-                        }
-                        const dayKey = ticket.completedAt.toISOString().split('T')[0];
-                        if (!reports[monthKey].dailyClosedByCategory[category]) reports[monthKey].dailyClosedByCategory[category] = {};
-                        reports[monthKey].dailyClosedByCategory[category][dayKey] = (reports[monthKey].dailyClosedByCategory[category][dayKey] || 0) + 1;
-                    }
-                    if (ticket.startedAt.getUTCFullYear() === year && ticket.startedAt.getUTCMonth() === month && !ticket.completedAt) {
-                        reports[monthKey].inProgressByCategory[category] = (reports[monthKey].inProgressByCategory[category] || 0) + 1;
-                    }
-                });
-                Object.values(reports).forEach(report => report.categories = [...report.categories].sort());
-                return reports;
-            }
-
-            function monthlyRenderMonthlyReports(reports, selectedCategory) {
-                if (!monthlyReportsContainer) return;
-                monthlyReportsContainer.innerHTML = '';
-                const sortedMonthKeys = Object.keys(reports || {}).sort().reverse();
-                // Build quick site chips + month chips
-                const monthNav = document.getElementById('monthNav');
-                if (monthNav) {
-                    const monthButtons = sortedMonthKeys.map(key => {
-                        const d = new Date(`${key}-01T12:00:00Z`);
-                        const label = d.toLocaleString('default', { month: 'short', year: '2-digit' });
-                    // Defined button classes inline to avoid undefined variable errors
-                    const buttonClasses = "px-3 py-1.5 text-sm rounded border bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors";
-                    return `<button data-month-id="month-${key}" class="${buttonClasses}">${label}</button>`;
-                    });
-                    monthNav.classList.toggle('hidden', sortedMonthKeys.length === 0);
-                    monthNav.innerHTML = `
-                        <div class="inline-flex items-center gap-2">
-                            <button id="monthsToggle" class="md:hidden inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded border bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700">Months ▾</button>
-                            <div id="monthsChips" class="hidden md:inline-flex items-center gap-2">${monthButtons.join('')}</div>
-                        </div>
-                    `;
-                }
-                if (sortedMonthKeys.length === 0) {
-                    monthlyReportsContainer.innerHTML = `<p class="text-center text-gray-500">No data found.</p>`;
-                    return;
-                }
-                sortedMonthKeys.forEach(monthKey => {
-                    const reportData = reports[monthKey];
-                    const monthDate = new Date(`${monthKey}-01T12:00:00Z`);
-                    const monthName = monthDate.toLocaleString('default', { month: 'long', year: 'numeric' });
-                    const monthId = `month-${monthKey}`;
-                    monthlyState.analyticsCache[monthId] = reportData;
-                    const section = document.createElement('div');
-                    section.className = 'bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-600 overflow-hidden scroll-mt-16 mb-8';
-                    section.id = monthId;
-                    const summaryId = `${monthId}-summary`;
-                    let contentHTML = '';
-                    if (selectedCategory === 'all') {
-                        contentHTML = monthlyRenderAllSitesView(monthId, monthName, reportData);
-                    } else {
-                        if (reportData.categories.includes(selectedCategory)) {
-                            contentHTML = monthlyRenderSingleSiteView(monthId, monthName, reportData, selectedCategory);
-                        }
-                    }
-                    if (contentHTML) {
-                        section.innerHTML = `
-                            <button id="${summaryId}" class="w-full text-left px-4 sm:px-5 py-3 border-b border-gray-200 dark:border-slate-600 flex items-center justify-between bg-gray-50 dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors" aria-expanded="true" aria-controls="${monthId}-body">
-                                <span class="font-semibold text-gray-900 dark:text-gray-100">${monthName}${selectedCategory==='all'?'':' – '+selectedCategory}</span>
-                                <svg data-chevron class="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/></svg>
-                            </button>
-                            <div id="${monthId}-body" class="p-5 sm:p-6 bg-white dark:bg-slate-800" data-collapsible>
-                                ${contentHTML}
-                            </div>`;
-                        monthlyReportsContainer.appendChild(section);
-                        if (selectedCategory === 'all') {
-                            monthlyRenderAllSitesChart(monthId, reportData);
-                            monthlyRenderTopAgentsInto(`top-agents-${monthId}`, reportData.closedByAgentOverall, 10, 'closed_desc');
-                        } else {
-                            monthlyRenderSingleSiteTrendChart(monthId, reportData, selectedCategory);
-                        }
-                    }
-                });
-            }
-
-            function monthlyRenderAllSitesView(monthId, monthName, { closedByCategory, categories }) {
-                return `
-                    <h2 class="text-2xl font-bold mb-12">${monthName}</h2>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 bg-white">
-                        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border-0 p-8 sm:p-12">
-                            <div class="chart-container"><canvas id="chart-${monthId}"></canvas></div>
-                        </div>
-                        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border-0 p-8 sm:p-12">
-                            <div class="flex justify-between items-center mb-8">
-                                <h3 class="text-xl font-semibold">Numerical Data</h3>
-                                <button class="copy-btn bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm" data-table-id="table-el-${monthId}">Copy Table</button>
-                            </div>
-                            <div id="table-${monthId}">${monthlyRenderAllSitesTable(monthId, closedByCategory, categories)}</div>
-                            <div class="mt-10">
-                                <div class="flex flex-wrap items-center justify-between gap-2 mb-6">
-                                    <h3 class="text-xl font-semibold">Top Agents (Closed)</h3>
-                                    <div class="flex items-center gap-2">
-                                        <label for="top-agents-limit-${monthId}" class="text-sm text-gray-600">Show</label>
-                                        <select id="top-agents-limit-${monthId}" class="p-1 border border-gray-300 rounded text-sm">
-                                            <option value="5">Top 5</option>
-                                            <option value="10" selected>Top 10</option>
-                                            <option value="20">Top 20</option>
-                                            <option value="all">All</option>
-                                        </select>
-                                        <label for="top-agents-sort-${monthId}" class="text-sm text-gray-600">Sort</label>
-                                        <select id="top-agents-sort-${monthId}" class="p-1 border border-gray-300 rounded text-sm">
-                                            <option value="closed_desc" selected>Closed ↓</option>
-                                            <option value="closed_asc">Closed ↑</option>
-                                            <option value="name_asc">Name A–Z</option>
-                                            <option value="name_desc">Name Z–A</option>
-                                        </select>
-                                        <button id="top-agents-csv-${monthId}" class="bg-white border border-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-100 text-sm"><svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>CSV</button>
-                                    </div>
-                                </div>
-                                <div id="top-agents-${monthId}"></div>
-                            </div>
-                        </div>
-                    </div>`;
-            }
-
-            function monthlyRenderSingleSiteView(monthId, monthName, { closedByCategory, inProgressByCategory, closedByAgent }, category) {
-                const closedCount = closedByCategory[category] || 0;
-                const inProgressCount = inProgressByCategory[category] || 0;
-                const agentData = closedByAgent[category] || {};
-                return `
-                    <h2 class="text-2xl font-bold mb-12">${monthName} - ${escapeHtml(category)}</h2>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 bg-white">
-                        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border-0 p-8 sm:p-12">
-                            <h3 class="text-xl font-semibold mb-8">Monthly Stats</h3>
-                            <div class="space-y-8">
-                                <div class="bg-gray-50 p-6 rounded-xl text-center">
-                                    <h4 class="text-gray-500 text-sm font-medium">Queries Closed</h4>
-                                    <p class="text-4xl font-bold text-gray-900 mt-2">${closedCount}</p>
-                                </div>
-                                <button class="bg-gray-50 p-6 rounded-xl text-center w-full hover:bg-gray-100 focus:outline-none transition-colors duration-200" data-inprogress-month="${monthId}" data-inprogress-cat="${category}" aria-label="View in-progress list for ${escapeHtml(category)} in ${monthName}">
-                                    <h4 class="text-gray-500 text-sm font-medium">Queries In Progress</h4>
-                                    <p class="text-4xl font-bold text-gray-900 mt-2">${inProgressCount}</p>
-                                    <span class="text-xs text-gray-500 mt-1 inline-block">Click to view list</span>
-                                </button>
-                                <div class="bg-white p-6 rounded-xl shadow-sm">
-                                    <h4 class="text-gray-700 text-sm font-semibold mb-3">Trend (Closed per day)</h4>
-                                    <div class="chart-container"><canvas id="trend-${monthId}"></canvas></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border-0 p-8 sm:p-12">
-                            <h3 class="text-xl font-semibold mb-8">Agent Breakdown (Closed)</h3>
-                            <div id="table-${monthId}">${monthlyRenderSingleSiteAgentTable(agentData)}</div>
-                        </div>
-                    </div>`;
-            }
-
-            function monthlyRenderAllSitesChart(monthId, report) {
-                const canvas = document.getElementById(`chart-${monthId}`);
-                if (!canvas) return;
-                const ctx = canvas.getContext('2d');
-                // destroy previous
-                if (monthlyState.charts[monthId] && typeof monthlyState.charts[monthId].destroy === 'function') {
-                    monthlyState.charts[monthId].destroy();
-                }
-                const themed = chartThemeOptions();
-                const categories = Object.keys(report.closedByCategory || {});
-                const closed = categories.map(cat => report.closedByCategory[cat] || 0);
-                const inProgress = categories.map(cat => (report.inProgressByCategory || {})[cat] || 0);
-                const baseDataset = [{ label: 'Closed', data: closed, backgroundColor: categories.map((cat, i) => stringToColor(cat, i)) }];
-                // Always doughnut, but more interactive
-                monthlyState.charts[monthId] = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: { labels: categories, datasets: baseDataset },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: 'right', labels: themed.plugins.legend.labels },
-                            tooltip: {
-                                callbacks: {
-                                    label: (c) => `${c.label}: ${c.formattedValue}`
-                                }
-                            },
-                            datalabels: {
-                                color: (ctx) => {
-                                    const bg = ctx.dataset.backgroundColor[ctx.dataIndex] || '#4F46E5';
-                                    try {
-                                        const rgb = bg.replace('#','').match(/.{1,2}/g).map(h => parseInt(h,16));
-                                        const luminance = (0.299*rgb[0] + 0.587*rgb[1] + 0.114*rgb[2]) / 255;
-                                        return luminance > 0.6 ? '#111827' : '#F9FAFB';
-                                    } catch(_) { return '#111827'; }
-                                },
-                                formatter: (value) => value,
-                                font: { weight: '700' }
-                            }
-                        },
-                        onClick: (evt, elements) => {
-                            if (!elements || !elements.length) return;
-                            const idx = elements[0].index;
-                            const cat = categories[idx];
-                            // Toggle view: switch monthly filter to this category and re-render
-                            if (categoryFilterMonthly) {
-                                categoryFilterMonthly.value = cat;
-                                monthlyRefresh();
-                            }
-                        },
-                        onHover: (evt, activeEls) => {
-                            canvas.style.cursor = activeEls && activeEls.length ? 'pointer' : 'default';
-                        }
-                    }
-                });
-            }
-
-            function monthlyRenderTopAgentsInto(containerId, closedByAgentOverall, limit = 10, sortKey = 'closed_desc') {
-                const container = document.getElementById(containerId);
-                if (!container) return;
-                let rows = Object.entries(closedByAgentOverall || {}).filter(([name]) => name && name.toLowerCase() !== 'deactivated');
-                const rollSel = document.getElementById('agentRollupMonthly');
-                if (rollSel) limit = rollSel.value === 'top20' ? '20' : rollSel.value === 'all' ? 'all' : '10';
-                if (sortKey === 'name_asc') rows.sort(([a], [b]) => a.localeCompare(b));
-                else if (sortKey === 'name_desc') rows.sort(([a], [b]) => b.localeCompare(a));
-                else if (sortKey === 'closed_asc') rows.sort(([, a], [, b]) => a - b);
-                else rows.sort(([, a], [, b]) => b - a);
-                if (limit !== 'all') rows = rows.slice(0, parseInt(limit, 10));
-                if (rows.length === 0) {
-                    container.innerHTML = `<p class="text-gray-500">No agent closures recorded.</p>`;
-                    return;
-                }
-                container.innerHTML = `
-                    <table class="w-full text-left">
-                        <thead class="bg-gray-50 border-b">
-                            <tr><th class="p-3 font-semibold">Agent</th><th class="p-3 font-semibold text-right">Closed</th></tr>
-                        </thead>
-                        <tbody>
-                            ${rows.map(([name, count]) => `
-                                <tr class="border-b hover:bg-gray-50 cursor-pointer" data-agent-name="${escapeHtml(name)}" tabindex="0" role="button" aria-label="Open ${escapeHtml(name)} performance details"><td class="p-3">${escapeHtml(name)}</td><td class="p-3 text-right">${count}</td></tr>
-                            `).join('')}
-                        </tbody>
-                    </table>`;
-            }
-
-            function monthlyRenderSingleSiteTrendChart(monthId, reportData, category) {
-                const daily = (reportData.dailyClosedByCategory && reportData.dailyClosedByCategory[category]) || {};
-                const dates = Object.keys(daily).sort();
-                const ctx = document.getElementById(`trend-${monthId}`)?.getContext('2d');
-                if (!ctx) return;
-                const isDark = document.documentElement.classList.contains('dark');
-                const lineColor = isDark ? '#60A5FA' : '#4F46E5';
-                new Chart(ctx, {
-                    type: 'line',
-                    data: { labels: dates, datasets: [{ data: dates.map(d => daily[d] || 0), borderColor: lineColor, backgroundColor: 'transparent', tension: 0.2, pointRadius: 2, label: 'Closed per day' }] },
-                
+        function monthlyRefresh() {
+            console.log('Monthly refresh placeholder');
+        }
+    </script>
+</body>
+</html>
