@@ -2882,6 +2882,12 @@
         document.addEventListener('DOMContentLoaded', async () => {
             // TESTING: Skip authentication entirely
             isAuthenticated = true;
+            currentUser = { name: 'Test User', email: 'test@example.com' };
+            authModal.style.display = 'none';
+            mainContent.style.display = 'block';
+            
+            // TESTING: Skip authentication entirely
+            isAuthenticated = true;
             currentUser = { email: 'test@example.com', name: 'Test User' };
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('appContainer').classList.remove('hidden');
@@ -2967,13 +2973,6 @@
                 
                 // Show error message
                 const errorDiv = document.createElement('div');
-                errorDiv.className = 'fixed inset-0 flex items-center justify-center bg-gray-50 z-50';
-                errorDiv.innerHTML = `
-                    <div class="text-center p-8">
-                        <h2 class="text-xl font-bold text-red-600 mb-4">Loading Error</h2>
-                        <p class="text-gray-600">${error.message}</p>
-                    </div>
-                `;
                 document.body.appendChild(errorDiv);
             }
         });
