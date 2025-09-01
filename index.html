@@ -1291,7 +1291,7 @@
                 <!-- Official Octopus Energy wordmark with animation (inline at runtime) -->
                 <div class="brand-loader" id="brandLoader" data-src="https://assets.octopusenergy.com/826x366/4197eacfc9/octopus-energy.svg" style="--brand-mask: url('https://assets.octopusenergy.com/826x366/4197eacfc9/octopus-energy.svg')">
                     <noscript>
-                        <img class="brand-logo" src="https://assets.octopusenergy.com/826x366/4197eacfc9/octopus-energy.svg" alt="Octopus Energy" />
+                        <img class="w-16 h-16 animate-bounce" src="pink-octopus.png" alt="Loading" />
                     </noscript>
                 </div>
             </div>
@@ -2945,13 +2945,37 @@
                     brandLoaderEl.innerHTML = svgText;
                     const injected = brandLoaderEl.querySelector('svg');
                     if (injected) {
-                        injected.classList.add('brand-logo');
-                    }
+            try {
+                isAuthenticated = true;
+                currentUser = { name: 'Test User', email: 'test@example.com' };
+                authModal.classList.add('hidden');
+                document.getElementById('mainContent').classList.remove('hidden');
+                
+                // Replace the brand loader with pink octopus
+                const brandLoader = document.getElementById('brandLoader');
+                if (brandLoader) {
+                    brandLoader.innerHTML = '<img class="w-16 h-16 animate-bounce" src="pink-octopus.png" alt="Loading" />';
                 }
-            } catch (_) {}
-
-            // Initialize the app directly (skip auth check)
-            await initializeApp();
+                
+                // Initialize the app
+                await initializeApp();
+            } catch (error) {
+                console.error('Initialization error:', error);
+                // Hide loader on error
+                const loader = document.getElementById('loader');
+                if (loader) loader.classList.add('hidden');
+                
+                // Show error message
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'fixed inset-0 flex items-center justify-center bg-gray-50 z-50';
+                errorDiv.innerHTML = `
+                    <div class="text-center p-8">
+                        <h2 class="text-xl font-bold text-red-600 mb-4">Loading Error</h2>
+                        <p class="text-gray-600">${error.message}</p>
+                    </div>
+                `;
+                document.body.appendChild(errorDiv);
+            }
         });
 
         async function initializeApp() {
