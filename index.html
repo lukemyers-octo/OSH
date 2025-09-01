@@ -1658,7 +1658,7 @@
         // Flyout elements
         let flyoutBackdrop, flyoutPanel, flyoutTitle, flyoutClose, flyoutContent;
         // Authentication elements
-        let googleSignInBtn, loginError, loginScreen, appContainer;
+        let googleSignInBtn, loginError, loginScreen, appContainer, googleSignInBtnDefaultHTML;
 
         // --- STATE ---
         let fullData = [];
@@ -1679,6 +1679,14 @@
             isAuthenticated = true;
             currentUser = { email: 'test@example.com', name: 'Test User' };
             showMainContent();
+        }
+
+        // Reset Google sign-in button to default state
+        function resetGoogleSignInButton() {
+            if (googleSignInBtn && googleSignInBtnDefaultHTML) {
+                googleSignInBtn.disabled = false;
+                googleSignInBtn.innerHTML = googleSignInBtnDefaultHTML;
+            }
         }
 
         // Register Chart.js Datalabels plugin if available
@@ -2872,10 +2880,10 @@
         function applyDarkMode() {
             if (isDarkMode) {
                 document.documentElement.classList.add('dark');
-                darkModeToggle.textContent = '☀️';
+                if (darkModeToggle) darkModeToggle.textContent = '☀️';
             } else {
                 document.documentElement.classList.remove('dark');
-                darkModeToggle.textContent = '🌙';
+                if (darkModeToggle) darkModeToggle.textContent = '🌙';
             }
         }
 
@@ -2966,9 +2974,6 @@
         });
 
         async function initializeApp() {
-            // Apply theme
-            applyTheme();
-            
             // Initialize DOM elements
             loader = document.getElementById('loader');
             errorMessage = document.getElementById('errorMessage');
@@ -3002,6 +3007,10 @@
             loginError = document.getElementById('loginError');
             loginScreen = document.getElementById('loginScreen');
             appContainer = document.getElementById('appContainer');
+            googleSignInBtnDefaultHTML = googleSignInBtn.innerHTML;
+
+            // Apply theme after elements are ready
+            applyTheme();
 
             // Set up event listeners
             setupEventListeners();
@@ -3077,11 +3086,12 @@
                         try { currentAgentName = null; } catch (_) {}
                         if (loginScreen) loginScreen.style.display = 'flex';
                         if (appContainer) appContainer.classList.add('hidden');
+                        if (googleSignInBtn) resetGoogleSignInButton();
                     }
                 });
             }
 
-            // Google sign-in button event listener (always set up regardless of DEV_MODE)
+            // Google sign-in button event listener
             if (googleSignInBtn) {
                 googleSignInBtn.addEventListener('click', function() {
                     if (DEV_MODE) {
@@ -3104,6 +3114,10 @@
                         }
                         return;
                     }
+                    if (loginError) {
+                        loginError.textContent = '';
+                        loginError.classList.add('hidden');
+                    }
                     googleSignInBtn.disabled = true;
                     googleSignInBtn.textContent = 'Signing in...';
                     auth.signInWithPopup(provider)
@@ -3115,6 +3129,7 @@
                                     loginError.textContent = 'Please sign in with your ' + ORGANISATION_DOMAIN + ' email.';
                                     loginError.classList.remove('hidden');
                                 }
+                                resetGoogleSignInButton();
                             }
                         })
                         .catch((error) => {
@@ -3123,8 +3138,7 @@
                                 loginError.textContent = error.message;
                                 loginError.classList.remove('hidden');
                             }
-                            googleSignInBtn.disabled = false;
-                            googleSignInBtn.innerHTML = '<img class="google-icon w-5 h-5 mr-3" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" aria-hidden="true" />Sign in with Google';
+                            resetGoogleSignInButton();
                         });
                 });
             }
