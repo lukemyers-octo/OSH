@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monthly Performance Report</title>
+    <meta http-equiv="refresh" content="0;url=./index.html#monthly">
+    <script>window.location.replace('./index.html#monthly');</script>
+    <!-- Tailwind CSS, Chart.js, and Google Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .chart-container { position: relative; height: 400px; width: 100%; }
+        
+        /* Loader + dark mode to match index.html */
+        #loader { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #F9FAFB; z-index: 9999; }
+        #loader.hidden { display: none; }
+        .brand-loader { position: relative; width: min(420px, 80vw); isolation: isolate; }
+        .brand-logo { position: relative; z-index: 0; width: 100%; height: auto; animation: brand-bob 2.4s ease-in-out infinite; filter: drop-shadow(0 1px 1.5px rgba(0,0,0,0.18)); }
+        .brand-loader::after { content: none; }
+        .brand-logo .shineOverlay { opacity: 0.12; }
+        .brand-logo path,
+        .brand-logo circle,
+        .brand-logo rect,
+        .brand-logo polygon,
+        .brand-logo polyline,
+        .brand-logo ellipse,
+        .brand-logo text { stroke: rgba(0,0,0,0.5); stroke-width: 1.2; vector-effect: non-scaling-stroke; paint-order: stroke; }
+        .dark .brand-logo .shineOverlay { display: none; }
+        @keyframes brand-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        
+        /* Dark mode theme (match index.html) */
+        .dark body { background-color: #000000; color: #E5E7EB; }
+        .dark h1, .dark h2, .dark h3, .dark h4 { color: #F9FAFB !important; }
+        .dark .text-gray-900 { color: #F9FAFB !important; }
+        .dark .text-gray-800 { color: #F3F4F6 !important; }
+        .dark .text-gray-700 { color: #E5E7EB !important; }
+        .dark .text-gray-600 { color: #D1D5DB !important; }
+        .dark .text-gray-500 { color: #A3A3A3 !important; }
+        .dark .bg-white { background-color: #111827 !important; color: #E5E7EB; }
+        .dark .bg-gray-50 { background-color: #1F2937 !important; }
+        .dark .border-gray-300 { border-color: #374151 !important; }
+        .dark .hover\:bg-gray-100:hover { background-color: #111827 !important; }
+        .dark .hover\:bg-gray-50:hover { background-color: #0F172A !important; }
+        .dark .hover\:bg-indigo-700:hover { background-color: #3730A3 !important; }
+        .dark #loader { background-color: #111827 !important; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+    <button id="darkModeToggle" class="fixed top-3 right-3 text-2xl z-50" aria-label="Toggle dark mode">🌙</button>
+    <noscript>
+        <div class="container mx-auto p-8">
+            <div class="bg-white p-6 rounded-lg shadow text-center">
+                <h1 class="text-2xl font-bold mb-2">Monthly Report has moved</h1>
+                <p class="text-gray-700 mb-4">Please open <a href="./index.html#monthly" class="text-indigo-600 hover:underline">index.html#monthly</a>.</p>
+            </div>
+        </div>
+    </noscript>
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <!-- Header Section -->
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-gray-900">Monthly Performance Report</h1>
+            <p class="mt-2 text-lg text-gray-600">A monthly breakdown of performance by Smart Hub site.</p>
+        </header>
+
+        <!-- Loading and Error Section -->
+        <div id="loader" class="fixed inset-0 flex items-center justify-center bg-gray-50 z-50">
+            <div class="flex flex-col items-center">
+                <!-- Match index.html official wordmark loader with internal shimmer -->
+                <div class="brand-loader" id="brandLoader" data-src="https://assets.octopusenergy.com/826x366/4197eacfc9/octopus-energy.svg">
+                    <noscript>
+                        <img class="brand-logo" src="https://assets.octopusenergy.com/826x366/4197eacfc9/octopus-energy.svg" alt="Octopus Energy" />
+                    </noscript>
+                </div>
+                <p class="text-sm text-gray-500 mt-4">Loading…</p>
+            </div>
+        </div>
+        <div id="errorMessage" class="text-center py-10 text-red-600 bg-red-50 p-4 rounded-lg" style="display: none;"></div>
+
+        <!-- Main Content -->
+        <main id="reportContent" class="hidden">
+            <!-- Filter Section -->
+            <div class="bg-white p-4 rounded-lg shadow mb-8 flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <label for="categoryFilterReport" class="font-semibold text-gray-700">Smart Hub:</label>
+                    <select id="categoryFilterReport" class="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"></select>
+                </div>
+                 <a href="./index.html" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-100 transition text-sm font-medium">
+                    Back to Main Dashboard
+                </a>
+            </div>
+
+            <!-- This container will be populated with monthly reports -->
+            <div id="monthlyReportsContainer" class="space-y-8"></div>
+        </main>
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const API_URL = 'https://us-central1-molten-verve-411115.cloudfunctions.net/googleSheetsProxy';
+        const CATEGORY_COLUMN = 'Smart Hub';
+        const NAME_COLUMN = 'Name';
+        const DATE_COLUMNS = {
+            started: ['started at', 'started'],
+            completed: ['completed at', 'completed', 'closed']
+        };
+
+        // --- DOM ELEMENTS ---
+        const loader = document.getElementById('loader');
+        const errorMessage = document.getElementById('errorMessage');
+        const reportContent = document.getElementById('reportContent');
+        const categoryFilter = document.getElementById('categoryFilterReport');
+        const monthlyReportsContainer = document.getElementById('monthlyReportsContainer');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+
+        // --- STATE ---
+        let fullData = [];
+        let categoryColName = null;
+        let nameColName = null;
+        let statusColName = null;
+        let isDarkMode = localStorage.getItem('isDarkMode') === 'true';
+        const monthlyAnalyticsCache = {};
+
+        // --- UTILITIES ---
+        // Register Chart.js Datalabels plugin if available (match index.html)
+        try {
+            if (typeof Chart !== 'undefined' && typeof Chart.register === 'function' && typeof ChartDataLabels !== 'undefined') {
+                Chart.register(ChartDataLabels);
+            }
+        } catch (e) {
+            console.warn('ChartDataLabels plugin not registered:', e);
+        }
+        function findColumnName(columns, possibleNames) {
+            const lower = columns.map(c => c.toLowerCase());
+            for (const pname of possibleNames) {
+                const idx = lower.indexOf(pname.toLowerCase());
+                if (idx !== -1) return columns[idx];
+            }
+            return null;
+        }
+        
+        function safeDate(value) {
+            if (!value) return null;
+            const today = new Date();
+            today.setHours(23, 59, 59, 999);
+            const parts = String(value).trim().match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})/);
+            // Helper to normalise year and build a UTC date
+            const buildDate = (d, m, y) => {
+                let year = parseInt(y, 10);
+                if (year < 100) year += 2000;
+                const date = new Date(Date.UTC(year, parseInt(m, 10) - 1, parseInt(d, 10)));
+                return isNaN(date.getTime()) ? null : date;
+            };
+            if (parts) {
+                const d1 = parts[1], d2 = parts[2], y = parts[3];
+                const ddmm = buildDate(d1, d2, y);
+                const mmdd = buildDate(d2, d1, y);
+                // Prefer UK dd/mm if not in the future
+                if (ddmm && ddmm <= today) return ddmm;
+                // If dd/mm is in the future but mm/dd is valid and not future, assume US mis-entry and correct
+                if (mmdd && mmdd <= today) return mmdd;
+                // If both are in the future, reject to avoid future dates on charts
+                return null;
+            }
+            // Fallback parser
+            const fallback = new Date(value);
+            if (!isNaN(fallback.getTime()) && fallback <= today) return fallback;
+            // Try swapping assuming US if fallback is future
+            const swap = String(value).trim().match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})/);
+            if (swap) {
+                const alt = buildDate(swap[2], swap[1], swap[3]);
+                if (alt && alt <= today) return alt;
+            }
+            return null;
+        }
+        
+        function stringToColor(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            let color = '#';
+            for (let i = 0; i < 3; i++) {
+                const value = (hash >> (i * 8)) & 0xFF;
+                color += ('00' + value.toString(16)).substr(-2);
+            }
+            return color;
+        }
+
+        // Theme options for charts (legend label colours)
+        function chartThemeOptions() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const tick = isDark ? '#D1D5DB' : '#374151';
+            return { plugins: { legend: { labels: { color: tick } } } };
+        }
+
+        // --- FETCH HELPERS (with timeout) ---
+        function fetchJsonWithTimeout(url, timeoutMs = 15000) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeoutMs);
+            return fetch(url, { signal: controller.signal })
+                .finally(() => clearTimeout(timer));
+        }
+
+        function fetchTextWithTimeout(url, timeoutMs = 15000) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeoutMs);
+            return fetch(url, { signal: controller.signal })
+                .finally(() => clearTimeout(timer));
+        }
+
+        // --- DATA FETCH + INIT ---
+        async function initializeReport() {
+            try {
+                const response = await fetchJsonWithTimeout(API_URL, 15000);
+                if (!response.ok) throw new Error(`Network error: ${response.statusText}`);
+                const rawData = await response.json();
+                if (!rawData || !rawData.length) throw new Error('No data received.');
+
+                const columns = Object.keys(rawData[0]);
+                const foundDateCols = {
+                    started: findColumnName(columns, DATE_COLUMNS.started),
+                    completed: findColumnName(columns, DATE_COLUMNS.completed)
+                };
+                categoryColName = findColumnName(columns, [CATEGORY_COLUMN]);
+                nameColName = findColumnName(columns, [NAME_COLUMN]);
+                statusColName = findColumnName(columns, ['Status','Current Status','Ticket Status']);
+
+                if (!foundDateCols.completed || !foundDateCols.started) throw new Error(`Date columns ('started at'/'completed at') not found.`);
+                if (!categoryColName) throw new Error(`Category column '${CATEGORY_COLUMN}' not found.`);
+                if (!nameColName) throw new Error(`Name column '${NAME_COLUMN}' not found.`);
+
+                fullData = rawData.map(d => {
+                    let categoryValue = d[categoryColName] ? String(d[categoryColName]).trim() : 'Uncategorized';
+                    if (categoryValue.toUpperCase().startsWith('DDC')) categoryValue = 'DDC';
+                    const startedAt = safeDate(d[foundDateCols.started]);
+                    const completedAt = safeDate(d[foundDateCols.completed]);
+                    return { category: categoryValue, name: d[nameColName], startedAt, completedAt };
+                }).filter(d => d.startedAt);
+
+                populateCategoryFilter(fullData);
+                refreshReport();
+
+                loader.classList.add('hidden');
+                reportContent.classList.remove('hidden');
+            } catch (error) {
+                console.error('Initialization error:', error);
+                errorMessage.textContent = `Error: ${error.message}`;
+                errorMessage.style.display = 'block';
+                loader.classList.add('hidden');
+            }
+        }
+
+        // --- UI BUILDERS ---
+        function populateCategoryFilter(data) {
+            const categories = [...new Set(data.map(item => item.category).filter(Boolean))].sort();
+            categoryFilter.innerHTML = `<option value="all">All Sites</option>` +
+                categories.map(cat => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`).join('');
+        }
+
+        function refreshReport() {
+            const analyticsByMonth = analyzeDataByMonth(fullData);
+            renderMonthlyReports(analyticsByMonth, categoryFilter.value);
+        }
+        
+        function analyzeDataByMonth(data) {
+            const reports = {};
+            
+            data.forEach(ticket => {
+                const year = ticket.startedAt.getUTCFullYear();
+                const month = ticket.startedAt.getUTCMonth();
+                const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+                
+                if (!reports[monthKey]) {
+                    reports[monthKey] = {
+                        closedByCategory: {},
+                        inProgressByCategory: {},
+                        closedByAgent: {},
+                        closedByAgentOverall: {},
+                        dailyClosedByCategory: {},
+                        categories: new Set()
+                    };
+                }
+                
+                const category = ticket.category;
+                reports[monthKey].categories.add(category);
+
+                if (ticket.completedAt && ticket.completedAt.getUTCFullYear() === year && ticket.completedAt.getUTCMonth() === month) {
+                    reports[monthKey].closedByCategory[category] = (reports[monthKey].closedByCategory[category] || 0) + 1;
+                    if (ticket.name && ticket.name.toLowerCase() !== 'deactivated') {
+                       if (!reports[monthKey].closedByAgent[category]) reports[monthKey].closedByAgent[category] = {};
+                       reports[monthKey].closedByAgent[category][ticket.name] = (reports[monthKey].closedByAgent[category][ticket.name] || 0) + 1;
+                       // overall
+                       reports[monthKey].closedByAgentOverall[ticket.name] = (reports[monthKey].closedByAgentOverall[ticket.name] || 0) + 1;
+                    }
+                    // Daily closed per category for trend
+                    const dayKey = ticket.completedAt.toISOString().split('T')[0];
+                    if (!reports[monthKey].dailyClosedByCategory[category]) reports[monthKey].dailyClosedByCategory[category] = {};
+                    reports[monthKey].dailyClosedByCategory[category][dayKey] = (reports[monthKey].dailyClosedByCategory[category][dayKey] || 0) + 1;
+                }
+
+                if (ticket.startedAt.getUTCFullYear() === year && ticket.startedAt.getUTCMonth() === month && !ticket.completedAt) {
+                    reports[monthKey].inProgressByCategory[category] = (reports[monthKey].inProgressByCategory[category] || 0) + 1;
+                }
+            });
+            
+            Object.values(reports).forEach(report => report.categories = [...report.categories].sort());
+            return reports;
+        }
+
+        function renderMonthlyReports(reports, selectedCategory) {
+            monthlyReportsContainer.innerHTML = '';
+            const sortedMonthKeys = Object.keys(reports).sort().reverse();
+            
+            if (sortedMonthKeys.length === 0) {
+                monthlyReportsContainer.innerHTML = `<p class="text-center text-gray-500">No data found.</p>`;
+                return;
+            }
+
+            sortedMonthKeys.forEach(monthKey => {
+                const reportData = reports[monthKey];
+                const monthDate = new Date(`${monthKey}-01T12:00:00Z`);
+                const monthName = monthDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+                const monthId = `month-${monthKey}`;
+                monthlyAnalyticsCache[monthId] = reportData;
+
+                const section = document.createElement('div');
+                section.className = 'bg-white p-6 rounded-lg shadow';
+                
+                let contentHTML = '';
+                if (selectedCategory === 'all') {
+                    contentHTML = renderAllSitesView(monthId, monthName, reportData);
+                } else {
+                    if (reportData.categories.includes(selectedCategory)) {
+                       contentHTML = renderSingleSiteView(monthId, monthName, reportData, selectedCategory);
+                    }
+                }
+                if(contentHTML) {
+                    section.innerHTML = contentHTML;
+                    monthlyReportsContainer.appendChild(section);
+                    
+                    if (selectedCategory === 'all') {
+                        renderAllSitesChart(monthId, reportData);
+                        renderTopAgentsInto(`top-agents-${monthId}`, reportData.closedByAgentOverall, 10, 'closed_desc');
+                    } else {
+                        renderSingleSiteTrendChart(monthId, reportData, selectedCategory);
+                    }
+                }
+            });
+        }
+
+        function renderAllSitesView(monthId, monthName, { closedByCategory, categories }) {
+            return `
+                <h2 class="text-2xl font-bold mb-4">${monthName}</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">Category Breakdown</h3>
+                        <div class="chart-container"><canvas id="chart-${monthId}"></canvas></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-semibold">Numerical Data</h3>
+                            <button class="copy-btn bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm" data-table-id="table-el-${monthId}">Copy Table</button>
+                        </div>
+                        <div id="table-${monthId}">${renderAllSitesTable(monthId, closedByCategory, categories)}</div>
+                        <div class="mt-6">
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                <h3 class="text-xl font-semibold">Top Agents (Closed)</h3>
+                                <div class="flex items-center gap-2">
+                                    <label for="top-agents-limit-${monthId}" class="text-sm text-gray-600">Show</label>
+                                    <select id="top-agents-limit-${monthId}" class="p-1 border border-gray-300 rounded text-sm">
+                                        <option value="5">Top 5</option>
+                                        <option value="10" selected>Top 10</option>
+                                        <option value="20">Top 20</option>
+                                        <option value="all">All</option>
+                                    </select>
+                                    <label for="top-agents-sort-${monthId}" class="text-sm text-gray-600">Sort</label>
+                                    <select id="top-agents-sort-${monthId}" class="p-1 border border-gray-300 rounded text-sm">
+                                        <option value="closed_desc" selected>Closed ↓</option>
+                                        <option value="closed_asc">Closed ↑</option>
+                                        <option value="name_asc">Name A–Z</option>
+                                        <option value="name_desc">Name Z–A</option>
+                                    </select>
+                                    <button id="top-agents-csv-${monthId}" class="bg-white border border-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-100 text-sm">⬇️ CSV</button>
+                                </div>
+                            </div>
+                            <div id="top-agents-${monthId}"></div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+        
+        function renderSingleSiteView(monthId, monthName, { closedByCategory, inProgressByCategory, closedByAgent }, category) {
+            const closedCount = closedByCategory[category] || 0;
+            const inProgressCount = inProgressByCategory[category] || 0;
+            const agentData = closedByAgent[category] || {};
+
+            return `
+                <h2 class="text-2xl font-bold mb-4">${monthName} - ${escapeHtml(category)}</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">Monthly Stats</h3>
+                        <div class="space-y-4">
+                            <div class="bg-gray-50 p-4 rounded-lg text-center">
+                                <h4 class="text-gray-500 text-sm font-medium">Queries Closed</h4>
+                                <p class="text-4xl font-bold text-gray-900 mt-1">${closedCount}</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg text-center">
+                                <h4 class="text-gray-500 text-sm font-medium">Queries In Progress</h4>
+                                <p class="text-4xl font-bold text-gray-900 mt-1">${inProgressCount}</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg shadow">
+                                <h4 class="text-gray-700 text-sm font-semibold mb-2">Trend (Closed per day)</h4>
+                                <div class="chart-container"><canvas id="trend-${monthId}"></canvas></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">Agent Breakdown (Closed)</h3>
+                        <div id="table-${monthId}">${renderSingleSiteAgentTable(agentData)}</div>
+                    </div>
+                </div>`;
+        }
+
+        function renderAllSitesChart(monthId, { closedByCategory, categories }) {
+            const ctx = document.getElementById(`chart-${monthId}`).getContext('2d');
+            const themed = chartThemeOptions();
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        data: categories.map(cat => closedByCategory[cat] || 0),
+                        backgroundColor: categories.map(cat => stringToColor(cat)),
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: themed.plugins.legend.labels } } }
+            });
+        }
+
+        function renderTopAgentsInto(containerId, closedByAgentOverall, limit = 10, sortKey = 'closed_desc') {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            let rows = Object.entries(closedByAgentOverall || {})
+                .filter(([name]) => name && name.toLowerCase() !== 'deactivated');
+            if (sortKey === 'name_asc') rows.sort(([a], [b]) => a.localeCompare(b));
+            else if (sortKey === 'name_desc') rows.sort(([a], [b]) => b.localeCompare(a));
+            else if (sortKey === 'closed_asc') rows.sort(([, a], [, b]) => a - b);
+            else rows.sort(([, a], [, b]) => b - a);
+            if (limit !== 'all') rows = rows.slice(0, parseInt(limit, 10));
+            if (rows.length === 0) {
+                container.innerHTML = `<p class="text-gray-500">No agent closures recorded.</p>`;
+                return;
+            }
+            container.innerHTML = `
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 border-b">
+                        <tr><th class="p-3 font-semibold">Agent</th><th class="p-3 font-semibold text-right">Closed</th></tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map(([name, count]) => `
+                            <tr class="border-b"><td class="p-3">${escapeHtml(name)}</td><td class="p-3 text-right">${count}</td></tr>
+                        `).join('')}
+                    </tbody>
+                </table>`;
+        }
+
+        function renderSingleSiteTrendChart(monthId, reportData, category) {
+            const daily = (reportData.dailyClosedByCategory && reportData.dailyClosedByCategory[category]) || {};
+            const dates = Object.keys(daily).sort();
+            const ctx = document.getElementById(`trend-${monthId}`)?.getContext('2d');
+            if (!ctx) return;
+            const isDark = document.documentElement.classList.contains('dark');
+            const lineColor = isDark ? '#60A5FA' : '#4F46E5';
+            new Chart(ctx, {
+                type: 'line',
+                data: { labels: dates, datasets: [{ data: dates.map(d => daily[d] || 0), borderColor: lineColor, backgroundColor: 'transparent', tension: 0.2, pointRadius: 2, label: 'Closed per day' }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { type: 'time', time: { unit: 'day', displayFormats: { day: 'MMM d' } }, ticks: { color: isDark ? '#D1D5DB' : '#374151' }, grid: { color: isDark ? '#374151' : '#E5E7EB' } }, y: { beginAtZero: true, ticks: { precision: 0, color: isDark ? '#D1D5DB' : '#374151' }, grid: { color: isDark ? '#374151' : '#E5E7EB' } } }, plugins: { legend: { display: false } } }
+            });
+        }
+        
+        function renderAllSitesTable(monthId, closedByCategory, categories) {
+            const total = categories.reduce((sum, cat) => sum + (closedByCategory[cat] || 0), 0);
+            return `
+                <table id="table-el-${monthId}" class="w-full text-left">
+                    <thead class="bg-gray-50 border-b">
+                        <tr><th class="p-4 font-semibold">Category</th><th class="p-4 font-semibold text-right">Queries Closed</th></tr>
+                    </thead>
+                    <tbody>
+                        ${categories.map(cat => `
+                            <tr class="border-b"><td class="p-4">${escapeHtml(cat)}</td><td class="p-4 text-right">${closedByCategory[cat] || 0}</td></tr>
+                        `).join('')}
+                        <tr class="font-bold bg-gray-50">
+                            <td class="p-4">Total</td><td class="p-4 text-right">${total}</td>
+                        </tr>
+                    </tbody>
+                </table>`;
+        }
+
+        function renderSingleSiteAgentTable(agentData) {
+            const sortedAgents = Object.entries(agentData).sort(([, a], [, b]) => b - a);
+            if (sortedAgents.length === 0) return `<p class="text-gray-500 text-center">No agent activity this month.</p>`;
+            return `
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 border-b">
+                        <tr><th class="p-4 font-semibold">Agent</th><th class="p-4 font-semibold text-right">Queries Closed</th></tr>
+                    </thead>
+                    <tbody>
+                        ${sortedAgents.map(([name, count]) => `
+                            <tr class="border-b"><td class="p-4">${escapeHtml(name)}</td><td class="p-4 text-right">${count}</td></tr>
+                        `).join('')}
+                    </tbody>
+                </table>`;
+        }
+        
+        function copyTableToClipboard(event) {
+            const tableId = event.target.dataset.tableId;
+            const table = document.getElementById(tableId);
+            if (!table) return;
+
+            let text = '';
+            table.querySelectorAll('thead th').forEach(th => text += th.textContent + '\t');
+            text += '\n';
+            table.querySelectorAll('tbody tr').forEach(tr => {
+                tr.querySelectorAll('td').forEach(td => text += td.textContent + '\t');
+                text += '\n';
+            });
+
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+
+            const originalText = event.target.textContent;
+            event.target.textContent = 'Copied!';
+            setTimeout(() => event.target.textContent = originalText, 2000);
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]);
+        }
+
+        // --- EVENT LISTENERS ---
+        categoryFilter.addEventListener('change', refreshReport);
+        monthlyReportsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('copy-btn')) {
+                copyTableToClipboard(e);
+            }
+        });
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Inline brand SVG with internal shimmer
+            try {
+                const brandLoaderEl = document.getElementById('brandLoader');
+                if (brandLoaderEl && brandLoaderEl.dataset.src) {
+                    const res = await fetchTextWithTimeout(brandLoaderEl.dataset.src, 12000);
+                    if (res.ok) {
+                        const svgText = await res.text();
+                        brandLoaderEl.innerHTML = svgText;
+                        const injected = brandLoaderEl.querySelector('svg');
+                        if (injected) {
+                            injected.classList.add('brand-logo');
+                            try {
+                                const svgns = 'http://www.w3.org/2000/svg';
+                                const defs = injected.querySelector('defs') || injected.insertBefore(document.createElementNS(svgns, 'defs'), injected.firstChild);
+                                let lg = injected.querySelector('#brandShineGrad');
+                                if (!lg) {
+                                    lg = document.createElementNS(svgns, 'linearGradient');
+                                    lg.id = 'brandShineGrad';
+                                    lg.setAttribute('x1', '0%'); lg.setAttribute('y1', '0%');
+                                    lg.setAttribute('x2', '100%'); lg.setAttribute('y2', '0%');
+                                    const s1 = document.createElementNS(svgns, 'stop'); s1.setAttribute('offset', '45%'); s1.setAttribute('stop-color', 'rgba(255,255,255,0)');
+                                    const s2 = document.createElementNS(svgns, 'stop'); s2.setAttribute('offset', '50%'); s2.setAttribute('stop-color', 'rgba(255,255,255,1)');
+                                    const s3 = document.createElementNS(svgns, 'stop'); s3.setAttribute('offset', '55%'); s3.setAttribute('stop-color', 'rgba(255,255,255,0)');
+                                    lg.appendChild(s1); lg.appendChild(s2); lg.appendChild(s3);
+                                    defs.appendChild(lg);
+                                }
+                                let clip = injected.querySelector('#brandClip');
+                                if (!clip) {
+                                    clip = document.createElementNS(svgns, 'clipPath');
+                                    clip.id = 'brandClip';
+                                    const vb = (injected.getAttribute('viewBox') || '0 0 96 96').split(' ').map(parseFloat);
+                                    const rect = document.createElementNS(svgns, 'rect');
+                                    rect.setAttribute('x', vb[0]); rect.setAttribute('y', vb[1]); rect.setAttribute('width', vb[2]); rect.setAttribute('height', vb[3]);
+                                    clip.appendChild(rect);
+                                    defs.appendChild(clip);
+                                }
+                                let overlay = injected.querySelector('.shineOverlay');
+                                if (!overlay) {
+                                    overlay = document.createElementNS(svgns, 'rect');
+                                    overlay.classList.add('shineOverlay');
+                                    const vb = (injected.getAttribute('viewBox') || '0 0 96 96').split(' ').map(parseFloat);
+                                    overlay.setAttribute('x', vb[0]); overlay.setAttribute('y', vb[1]); overlay.setAttribute('width', vb[2]); overlay.setAttribute('height', vb[3]);
+                                    overlay.setAttribute('fill', 'url(#brandShineGrad)');
+                                    const anim = document.createElementNS(svgns, 'animateTransform');
+                                    anim.setAttribute('attributeName', 'transform');
+                                    anim.setAttribute('type', 'translate');
+                                    anim.setAttribute('from', '-10 0');
+                                    anim.setAttribute('to', '10 0');
+                                    anim.setAttribute('dur', '4.5s');
+                                    anim.setAttribute('repeatCount', 'indefinite');
+                                    overlay.appendChild(anim);
+                                    injected.appendChild(overlay);
+                                    overlay.setAttribute('clip-path', 'url(#brandClip)');
+                                }
+                            } catch (_) {}
+                        }
+                    }
+                }
+            } catch (_) {}
+
+            // Dark mode
+            const applyDarkMode = () => {
+                if (localStorage.getItem('isDarkMode') === 'true') {
+                    document.documentElement.classList.add('dark');
+                    darkModeToggle.textContent = '☀️';
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    darkModeToggle.textContent = '🌙';
+                }
+            };
+            applyDarkMode();
+            darkModeToggle.addEventListener('click', () => {
+                const next = !(localStorage.getItem('isDarkMode') === 'true');
+                localStorage.setItem('isDarkMode', next);
+                applyDarkMode();
+                // Re-render charts for current view to pick up theme
+                refreshReport();
+            });
+
+            initializeReport();
+        });
+        // Controls: update and CSV export for Top Agents
+        monthlyReportsContainer.addEventListener('change', (e) => {
+            const id = e.target.id || '';
+            const m1 = id.match(/^top-agents-limit-(month-\d{4}-\d{2})$/);
+            const m2 = id.match(/^top-agents-sort-(month-\d{4}-\d{2})$/);
+            const monthId = (m1 && m1[1]) || (m2 && m2[1]);
+            if (!monthId) return;
+            const data = monthlyAnalyticsCache[monthId];
+            if (!data) return;
+            const limitSel = document.getElementById(`top-agents-limit-${monthId}`);
+            const sortSel = document.getElementById(`top-agents-sort-${monthId}`);
+            const limit = limitSel ? limitSel.value : '10';
+            const sortKey = sortSel ? sortSel.value : 'closed_desc';
+            renderTopAgentsInto(`top-agents-${monthId}`, data.closedByAgentOverall, limit, sortKey);
+        });
+
+        monthlyReportsContainer.addEventListener('click', (e) => {
+            const id = e.target.id || '';
+            const m = id.match(/^top-agents-csv-(month-\d{4}-\d{2})$/);
+            if (!m) return;
+            const monthId = m[1];
+            const data = monthlyAnalyticsCache[monthId];
+            if (!data) return;
+            const limitSel = document.getElementById(`top-agents-limit-${monthId}`);
+            const sortSel = document.getElementById(`top-agents-sort-${monthId}`);
+            const limit = limitSel ? limitSel.value : '10';
+            const sortKey = sortSel ? sortSel.value : 'closed_desc';
+            let rows = Object.entries(data.closedByAgentOverall || {}).filter(([name]) => name && name.toLowerCase() !== 'deactivated');
+            if (sortKey === 'name_asc') rows.sort(([a], [b]) => a.localeCompare(b));
+            else if (sortKey === 'name_desc') rows.sort(([a], [b]) => b.localeCompare(a));
+            else if (sortKey === 'closed_asc') rows.sort(([, a], [, b]) => a - b);
+            else rows.sort(([, a], [, b]) => b - a);
+            if (limit !== 'all') rows = rows.slice(0, parseInt(limit, 10));
+            const headers = ['Agent', 'Closed'];
+            const filename = `top_agents_${monthId.replace('month-','')}.csv`;
+            downloadCsvFromRows(filename, headers, rows.map(([n,c]) => [n, c]));
+        });
+
+        function downloadCsvFromRows(filename, headers, rows) {
+            const escapeCell = (val) => '"' + String(val ?? '').replace(/"/g, '""') + '"';
+            const lines = [];
+            lines.push(headers.map(escapeCell).join(','));
+            rows.forEach(r => lines.push(r.map(escapeCell).join(',')));
+            const blob = new Blob(["\uFEFF" + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+        }
+    </script>
+</body>
+</html>

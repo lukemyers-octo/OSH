@@ -1,0 +1,10 @@
+{
+  "name": "google-sheets-proxy",
+  "version": "2.0.0",
+  "description": "A secure proxy to fetch Google Sheets data as JSON using the API.",
+  "main": "index.js",
+  "dependencies": {
+    "firebase": "^12.1.0",
+    "googleapis": "^134.0.0"
+  }
+}
