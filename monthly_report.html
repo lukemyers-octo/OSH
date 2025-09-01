@@ -151,7 +151,7 @@
             today.setHours(23, 59, 59, 999);
             const parts = String(value).trim().match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})/);
             // Helper to normalise year and build a UTC date
-            });
+            const buildDate = (d, m, y) => {
                 let year = parseInt(y, 10);
                 if (year < 100) year += 2000;
                 const date = new Date(Date.UTC(year, parseInt(m, 10) - 1, parseInt(d, 10)));
